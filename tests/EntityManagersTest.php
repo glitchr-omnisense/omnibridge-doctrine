@@ -45,4 +45,27 @@ final class EntityManagersTest extends TestCase
         self::assertSame('2026-10-05 05:02 UTC', $read->publishedAt->format('Y-m-d H:i T'), 'read as UTC');
         self::assertSame('2026-10-05 05:02 UTC', $read->updatedAt->format('Y-m-d H:i T'));
     }
+
+    public function testWithoutACacheTheMetadataIsKeptInMemoryNotLookedForOnARedis(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $entityManager = EntityManagers::create($connection, [__DIR__.'/Fixtures/Entity']);   // not in development: ORMSetup would look for APCu, Memcached, a Redis
+
+        self::assertInstanceOf(\Symfony\Component\Cache\Adapter\ArrayAdapter::class, $entityManager->getConfiguration()->getMetadataCache());
+        self::assertSame('thread', $entityManager->getClassMetadata(Thread::class)->getTableName());
+    }
+
+    public function testTheConfigurationIsHandedOverBeforeTheEntityManagerExists(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $factory = new \Doctrine\ORM\Repository\DefaultRepositoryFactory();
+        $seen = null;
+        $entityManager = EntityManagers::create($connection, [__DIR__.'/Fixtures/Entity'], true, configure: function (\Doctrine\ORM\Configuration $configuration) use ($factory, &$seen) {
+            $seen = $configuration->getNamingStrategy();
+            $configuration->setRepositoryFactory($factory);
+        });
+
+        self::assertInstanceOf(\Omnibridge\Doctrine\NamingStrategy::class, $seen, 'after omnibase\'s own settings');
+        self::assertSame($factory, $entityManager->getConfiguration()->getRepositoryFactory());
+    }
 }
