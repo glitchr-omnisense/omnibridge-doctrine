@@ -3,7 +3,7 @@
 namespace Omnibridge\Doctrine\Type;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\ConversionException;
+use Doctrine\DBAL\Types\Exception\InvalidFormat;
 
 /**
  * Doctrine's "datetime" as omnibase overrides it: written in UTC, read as UTC
@@ -27,7 +27,8 @@ class DateTimeType extends \Doctrine\DBAL\Types\DateTimeType
         }
         $converted = \DateTime::createFromFormat($platform->getDateTimeFormatString(), (string) $value, Utc::zone());
         if (false === $converted) {
-            throw ConversionException::conversionFailedFormat((string) $value, 'datetime', $platform->getDateTimeFormatString());
+            // As DBAL 4's own types say it (a ConversionException): conversionFailedFormat() is DBAL 3's, gone.
+            throw InvalidFormat::new((string) $value, static::class, $platform->getDateTimeFormatString());
         }
 
         return $converted;

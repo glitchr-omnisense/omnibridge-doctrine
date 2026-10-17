@@ -6,7 +6,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\DateTimeImmutableType;
 
 /** omnibase's utc_datetime_immutable: a moment written and read in UTC, whatever zone PHP is in. */
-final class UtcDateTimeImmutableType extends DateTimeImmutableType
+class UtcDateTimeImmutableType extends DateTimeImmutableType
 {
     public const NAME = 'utc_datetime_immutable';
 
