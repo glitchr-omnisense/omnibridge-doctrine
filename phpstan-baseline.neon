@@ -1,0 +1,157 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to function method_exists\(\) with Doctrine\\ORM\\Configuration and ''enableNativeLazyObj…'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/EntityManagers.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\NamingStrategy\:\:classToTableName\(\) should return string but returns string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/NamingStrategy.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\NamingStrategy\:\:lstrip\(\) has parameter \$prefixes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/NamingStrategy.php
+
+		-
+			message: '#^Parameter \#1 \$className of method Omnibridge\\Doctrine\\NamingStrategy\:\:classToTableName\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/NamingStrategy.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/NamingStrategy.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/NamingStrategy.php
+
+		-
+			message: '#^Parameter \#2 \$needle of function str_starts_with expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/NamingStrategy.php
+
+		-
+			message: '#^Parameter \#3 \$subject of function str_replace expects array\<string\>\|string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/NamingStrategy.php
+
+		-
+			message: '#^Cannot cast T of mixed to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: src/Type/DateTimeType.php
+
+		-
+			message: '#^Cannot cast T of mixed to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: src/Type/UtcDateTimeImmutableType.php
+
+		-
+			message: '#^Cannot cast T of mixed to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: src/Type/UtcDateTimeType.php
+
+		-
+			message: '#^Cannot access property \$publishedAt on App\\Entity\\Thread\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: tests/EntityManagersTest.php
+
+		-
+			message: '#^Cannot access property \$updatedAt on App\\Entity\\Thread\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: tests/EntityManagersTest.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTimeImmutable\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/EntityManagersTest.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTime\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/EntityManagersTest.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_values expects array\<mixed\>, array\<string, mixed\>\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/EntityManagersTest.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\NamingStrategy@anonymous/tests/NamingStrategyTest\.php\:27\:\:__construct\(\) has parameter \$declared with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\NamingStrategy@anonymous/tests/NamingStrategyTest\.php\:27\:\:classToTableName\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\Tests\\NamingStrategyTest\:\:site\(\) should return array\<string, array\{table\: string, declared\: bool, joins\: array\<int\<0, max\>\|string, array\{string, string\|null, string\|null, string, string, bool\}\>\}\> but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Parameter \#1 \$className of method Omnibridge\\Doctrine\\NamingStrategy\:\:classToTableName\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 6
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Parameter \#1 \$entityName of method Omnibridge\\Doctrine\\NamingStrategy\:\:joinKeyColumnName\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Parameter \#1 \$sourceEntity of method Omnibridge\\Doctrine\\NamingStrategy\:\:joinTableName\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Parameter \#2 \$className of method Omnibridge\\Doctrine\\NamingStrategy\:\:joinColumnName\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Parameter \#2 \$className of method Omnibridge\\Doctrine\\NamingStrategy\:\:propertyToColumnName\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Parameter \#2 \$targetEntity of method Omnibridge\\Doctrine\\NamingStrategy\:\:joinTableName\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Parameter \#3 \$propertyName of method Omnibridge\\Doctrine\\NamingStrategy\:\:joinTableName\(\) expects string, int\<0, max\>\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/NamingStrategyTest.php
