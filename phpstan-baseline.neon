@@ -1,52 +1,562 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Argument of an invalid type list\<object\>\|object supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 4
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 5
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Binary operation "\." between ''Doctrine\\\\ORM…'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 6
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access an offset on list\<object\>\|object\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$allocationSize on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$cascade on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 4
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$class on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$column on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$columnDefinition on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$columnPrefix on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$enumType on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$fetch on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 4
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$fetch on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$foreignKeyName on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$indexBy on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$initialValue on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$inverseForeignKeyName on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$inverseJoinColumns on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$inverseJoinColumns on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$inversedBy on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$inversedBy on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$joinColumns on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$joinColumns on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$joinTable on mixed\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$mappedBy on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$name on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$name on mixed\.$#'
+			identifier: property.nonObject
+			count: 4
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$options on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 6
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$orphanRemoval on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$overrides on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$position on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$readOnly on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$region on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$repositoryClass on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$schema on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$schema on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$sequenceName on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$strategy on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$targetEntity on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 4
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$usage on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot access property \$value on list\<object\>\|object\.$#'
+			identifier: property.nonObject
+			count: 6
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\DeclarationDriver\:\:__call\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\DeclarationDriver\:\:fetchMode\(\) should return int but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\DeclarationDriver\:\:generatedMode\(\) should return int but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\DeclarationDriver\:\:instances\(\) should return array\<class\-string, list\<object\>\|object\> but returns array\<non\-falsy\-string, non\-empty\-list\<object\>\|object\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\DeclarationDriver\:\:isRepeatedPropertyDeclaration\(\) has parameter \$metadata with generic class Doctrine\\ORM\\Mapping\\ClassMetadata but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\DeclarationDriver\:\:load\(\) has parameter \$metadata with generic class Doctrine\\ORM\\Mapping\\ClassMetadata but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\DeclarationDriver\:\:property\(\) has parameter \$metadata with generic class Doctrine\\ORM\\Mapping\\ClassMetadata but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function array_map expects \(callable\(mixed\)\: mixed\)\|null, Closure\(Doctrine\\ORM\\Mapping\\InverseJoinColumn\|Doctrine\\ORM\\Mapping\\JoinColumn\)\: array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function array_map expects \(callable\(object\)\: mixed\)\|null, Closure\(Doctrine\\ORM\\Mapping\\InverseJoinColumn\|Doctrine\\ORM\\Mapping\\JoinColumn\)\: array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$class of function class_exists expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$className of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:fullyQualifiedClassName\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$className of static method Doctrine\\ORM\\Mapping\\MappingException\:\:classIsNotAValidEntityOrMappedSuperClass\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$className of static method Doctrine\\ORM\\Mapping\\MappingException\:\:invalidFetchMode\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$columnDef of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setDiscriminatorColumn\(\) expects array\{name\: string\|null, fieldName\?\: string\|null, type\?\: string\|null, length\?\: int\|null, columnDefinition\?\: string\|null, enumType\?\: class\-string\<BackedEnum\>\|null, options\?\: array\<string, mixed\>\|null\}\|Doctrine\\ORM\\Mapping\\DiscriminatorColumnMapping\|null, array\{name\: mixed, type\: mixed, length\: mixed, columnDefinition\: mixed, enumType\: mixed, options\?\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$definition of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setCustomGeneratorDefinition\(\) expects array\<string, string\|null\>, array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$definition of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setSequenceGeneratorDefinition\(\) expects array\{sequenceName\?\: string, allocationSize\?\: int\|string, initialValue\?\: int\|string, quoted\?\: mixed\}, array\{sequenceName\: mixed, allocationSize\: mixed, initialValue\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$fieldName of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setAssociationOverride\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$fieldName of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setAttributeOverride\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$fieldName of static method Omnibridge\\Doctrine\\DeclarationDriver\:\:columnToArray\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$generatorType of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setIdGeneratorType\(\) expects 1\|2\|4\|5\|7, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$joinColumn of static method Omnibridge\\Doctrine\\DeclarationDriver\:\:joinColumnToArray\(\) expects Doctrine\\ORM\\Mapping\\InverseJoinColumn\|Doctrine\\ORM\\Mapping\\JoinColumn, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$joinColumn of static method Omnibridge\\Doctrine\\DeclarationDriver\:\:joinColumnToArray\(\) expects Doctrine\\ORM\\Mapping\\InverseJoinColumn\|Doctrine\\ORM\\Mapping\\JoinColumn, object given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$listenerName of static method Doctrine\\ORM\\Mapping\\MappingException\:\:entityListenerClassNotFound\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$map of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setDiscriminatorMap\(\) expects array\<int\|string, string\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$mapping of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:mapEmbedded\(\) expects array\{fieldName\: string, class\?\: class\-string, declaredField\?\: string, columnPrefix\?\: string\|false\|null, originalField\?\: string\}, array\{fieldName\: string, cache\?\: array\{usage\: int, region\: string\|null\}, class\: mixed, columnPrefix\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$policy of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setChangeTrackingPolicy\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$repositoryClassName of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setCustomRepositoryClass\(\) expects class\-string\<Doctrine\\ORM\\EntityRepository\>\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#1 \$type of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setInheritanceType\(\) expects 1\|2\|3, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#2 \$array of function array_map expects array, list\<object\>\|object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#2 \$array of function array_map expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#2 \$cache of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:getAssociationCacheDefaults\(\) expects array\{usage\?\: int, region\?\: string\|null\}, array\{usage\: int, region\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#2 \$column of static method Omnibridge\\Doctrine\\DeclarationDriver\:\:columnToArray\(\) expects Doctrine\\ORM\\Mapping\\Column, list\<object\>\|object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#2 \$column of static method Omnibridge\\Doctrine\\DeclarationDriver\:\:columnToArray\(\) expects Doctrine\\ORM\\Mapping\\Column, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#2 \$fetchMode of static method Omnibridge\\Doctrine\\DeclarationDriver\:\:fetchMode\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Parameter \#2 \$overrideMapping of method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:setAssociationOverride\(\) expects array\{joinColumns\?\: array, inversedBy\?\: string\|null, joinTable\?\: array, fetch\?\: string\|null, cascade\?\: array\<string\>\}, array\{\}\|array\{joinColumns\?\: array\<array\<string, mixed\>\>, inverseJoinColumns\?\: array\<array\<string, mixed\>\>, inversedBy\?\: mixed, fetch\?\: mixed\}\|array\{joinTable\: array\{name\: mixed, schema\: mixed, joinColumns\: array\<array\<string, mixed\>\>, inverseJoinColumns\: array\<array\<string, mixed\>\>\}, inversedBy\?\: mixed, fetch\?\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Possibly invalid array key type mixed\.$#'
+			identifier: offsetAccess.invalidOffset
+			count: 2
+			path: src/DeclarationDriver.php
+
+		-
+			message: '#^Unable to resolve the template type C in call to method Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:fullyQualifiedClassName\(\)$#'
+			identifier: argument.templateType
+			count: 1
+			path: src/DeclarationDriver.php
+
+		-
 			message: '#^Call to function method_exists\(\) with Doctrine\\ORM\\Configuration and ''enableNativeLazyObj…'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: src/EntityManagers.php
 
 		-
-			message: '#^Method Omnibridge\\Doctrine\\NamingStrategy\:\:classToTableName\(\) should return string but returns string\|null\.$#'
-			identifier: return.type
+			message: '#^Access to an undefined property Doctrine\\ORM\\Mapping\\DiscriminatorColumnMapping\:\:\$nullable\.$#'
+			identifier: property.notFound
 			count: 1
-			path: src/NamingStrategy.php
+			path: src/MetadataDescription.php
 
 		-
-			message: '#^Method Omnibridge\\Doctrine\\NamingStrategy\:\:lstrip\(\) has parameter \$prefixes with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/NamingStrategy.php
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: src/MetadataDescription.php
 
 		-
-			message: '#^Parameter \#1 \$className of method Omnibridge\\Doctrine\\NamingStrategy\:\:classToTableName\(\) expects class\-string, string given\.$#'
+			message: '#^Method Omnibridge\\Doctrine\\MetadataDescription\:\:entity\(\) has parameter \$metadata with generic class Doctrine\\ORM\\Mapping\\ClassMetadata but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/MetadataDescription.php
+
+		-
+			message: '#^Parameter \#10 \$indexBy of class Omnibridge\\Schema\\Relation constructor expects string\|null, mixed given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/NamingStrategy.php
+			path: src/MetadataDescription.php
 
 		-
-			message: '#^Parameter \#1 \$string of function strlen expects string, mixed given\.$#'
+			message: '#^Parameter \#2 \$array of function array_map expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/NamingStrategy.php
+			path: src/MetadataDescription.php
 
 		-
-			message: '#^Parameter \#1 \$string of function strlen expects string, string\|null given\.$#'
+			message: '#^Parameter \#3 \$map of class Omnibridge\\Schema\\Inheritance constructor expects array\<string, string\>, array\<int\|string, class\-string\> given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/NamingStrategy.php
+			path: src/MetadataDescription.php
 
 		-
-			message: '#^Parameter \#2 \$needle of function str_starts_with expects string, mixed given\.$#'
+			message: '#^Parameter \#4 \$referencedColumns of class Omnibridge\\Schema\\ForeignKey constructor expects list\<string\>, non\-empty\-array\<int, string\> given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/NamingStrategy.php
+			path: src/MetadataDescription.php
 
 		-
-			message: '#^Parameter \#3 \$subject of function str_replace expects array\<string\>\|string, string\|null given\.$#'
+			message: '#^Parameter \#5 \$mappedBy of class Omnibridge\\Schema\\Relation constructor expects string\|null, mixed given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/NamingStrategy.php
+			path: src/MetadataDescription.php
+
+		-
+			message: '#^Parameter \#6 \$inversedBy of class Omnibridge\\Schema\\Relation constructor expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/MetadataDescription.php
+
+		-
+			message: '#^Parameter \#9 \$options of class Omnibridge\\Schema\\Field constructor expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/MetadataDescription.php
+
+		-
+			message: '#^Parameter \#9 \$orderBy of class Omnibridge\\Schema\\Relation constructor expects array\<string, string\>, array\<string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/MetadataDescription.php
 
 		-
 			message: '#^Cannot cast T of mixed to string\.$#'
@@ -97,19 +607,103 @@ parameters:
 			path: tests/EntityManagersTest.php
 
 		-
-			message: '#^Method Omnibridge\\Doctrine\\NamingStrategy@anonymous/tests/NamingStrategyTest\.php\:27\:\:__construct\(\) has parameter \$declared with no value type specified in iterable type array\.$#'
+			message: '#^Property Omnibridge\\Doctrine\\Tests\\Fixtures\\Schema\\Entity\\User\:\:\$settings type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: tests/NamingStrategyTest.php
+			path: tests/Fixtures/Schema/Entity/User.php
 
 		-
-			message: '#^Method Omnibridge\\Doctrine\\NamingStrategy@anonymous/tests/NamingStrategyTest\.php\:27\:\:classToTableName\(\) should return string but returns mixed\.$#'
+			message: '#^Binary operation "\+" between array\{''@class''\: mixed\} and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Cannot access constant class on mixed\.$#'
+			identifier: classConstant.nonObject
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Cannot access offset ''discriminatorMap'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Cannot access offset ''propertyAccessors'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Cannot access offset ''subClasses'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\Tests\\Fixtures\\Schema\\Harness\:\:snapshot\(\) has parameter \$metadata with generic class Doctrine\\ORM\\Mapping\\ClassMetadata but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\Tests\\Fixtures\\Schema\\Harness\:\:snapshot\(\) should return array\<string, mixed\> but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_filter expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Parameter \#1 \$array of function ksort expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Parameter \#1 \$array of function sort expects TArray of array\<T\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Parameter \#1 \$object of function get_object_vars expects object, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function method_exists expects object\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Parameter \#1 of closure expects Doctrine\\Persistence\\Mapping\\Driver\\MappingDriver, Doctrine\\Persistence\\Mapping\\Driver\\MappingDriver\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/Schema/Harness.php
+
+		-
+			message: '#^Method Omnibridge\\Doctrine\\Tests\\NamingStrategyTest\:\:site\(\) should return array\<string, array\{table\: string, declared\: bool, joins\: array\<int\<0, max\>\|string, array\{string, string\|null, string\|null, string, string, bool\}\>\}\> but returns mixed\.$#'
 			identifier: return.type
 			count: 1
 			path: tests/NamingStrategyTest.php
 
 		-
-			message: '#^Method Omnibridge\\Doctrine\\Tests\\NamingStrategyTest\:\:site\(\) should return array\<string, array\{table\: string, declared\: bool, joins\: array\<int\<0, max\>\|string, array\{string, string\|null, string\|null, string, string, bool\}\>\}\> but returns mixed\.$#'
+			message: '#^Method Omnibridge\\Schema\\CamelCaseNaming@anonymous/tests/NamingStrategyTest\.php\:30\:\:__construct\(\) has parameter \$declared with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Method Omnibridge\\Schema\\CamelCaseNaming@anonymous/tests/NamingStrategyTest\.php\:30\:\:classToTableName\(\) should return string but returns mixed\.$#'
 			identifier: return.type
 			count: 1
 			path: tests/NamingStrategyTest.php
@@ -155,3 +749,75 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: tests/NamingStrategyTest.php
+
+		-
+			message: '#^Access to an undefined property Doctrine\\ORM\\Mapping\\AssociationMapping\:\:\$joinTable\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Cannot access offset 0 on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Cannot access property \$joinColumns on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Cannot access property \$name on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Cannot access property \$onDelete on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Cannot call method getAllClassNames\(\) on Doctrine\\Persistence\\Mapping\\Driver\\MappingDriver\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Cannot call method isTransient\(\) on Doctrine\\Persistence\\Mapping\\Driver\\MappingDriver\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Parameter \#1 \$data of static method Omnibridge\\Schema\\Declaration\\DeclarationSet\:\:fromArray\(\) expects array\<string, array\<string, mixed\>\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Parameter \#1 \$declarations of class Omnibridge\\Schema\\Declaration\\DeclarationSet constructor expects iterable\<Omnibridge\\Schema\\Declaration\\ClassDeclaration\>, array\<int, Omnibridge\\Schema\\Declaration\\ClassDeclaration\|null\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Schema/DeclarationDriverTest.php
+
+		-
+			message: '#^Call to function is_subclass_of\(\) with ''Doctrine\\\\ORM…'' and ''Doctrine\\\\ORM\\\\Mapping\\\\MappingAttribute'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Schema/VocabularyTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true and ''Doctrine\\\\ORM…'' will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Schema/VocabularyTest.php
+
+		-
+			message: '#^Parameter \#1 \$path of function dirname expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Schema/VocabularyTest.php

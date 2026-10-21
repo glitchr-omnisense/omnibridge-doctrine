@@ -2,121 +2,66 @@
 
 namespace Omnibridge\Doctrine;
 
-use Doctrine\ORM\Mapping\Table;
+use Omnibridge\Schema\CamelCaseNaming;
+use Omnibridge\Schema\Naming;
 
 /**
- * The names omnibase gives its tables and columns, for any framework mapping
- * the same database: App\Entity\Thread\Tag is threadTag, App\Entity\User\Profile
- * userProfile, Thread::$tags the join table thread_tags (thread_id,
- * threadTag_id), a property its own name. The same rules and results as
- * omnibase's Base\Database\Mapping\NamingStrategy (copied: two frameworks now
- * need them, plan 0 rule 13; omnibase is to take it from here).
+ * Doctrine's naming strategy answered by the family's Naming
+ * (Omnibridge\Schema\Naming, omniscient/omnibridge): the names omnibase gives
+ * its tables and columns, for any framework mapping the same database -
+ * App\Entity\Thread\Tag is threadTag, App\Entity\User\Profile userProfile,
+ * Thread::$tags the join table thread_tags (thread_id, threadTag_id), a
+ * property its own name. One place says how a class becomes a table
+ * (CamelCaseNaming): omnibase's Base\Database\Mapping\NamingStrategy extends
+ * this class, and the description built without the ORM (Omnibridge\Schema\
+ * Builder) asks the same Naming, so that both find the same tables.
  */
 class NamingStrategy implements \Doctrine\ORM\Mapping\NamingStrategy
 {
-    public const TABLE_NAME_SIZE = 64;
-    public const TABLE_I18N_SUFFIX = 'Intl';
+    public const TABLE_NAME_SIZE = CamelCaseNaming::TABLE_NAME_SIZE;
+    public const TABLE_I18N_SUFFIX = CamelCaseNaming::TABLE_I18N_SUFFIX;
+
+    public function __construct(private readonly Naming $naming = new CamelCaseNaming())
+    {
+    }
+
+    public function naming(): Naming
+    {
+        return $this->naming;
+    }
 
     public function classToTableName(string $className): string
     {
-        if (!$className) {
-            return '';
-        }
-
-        $tableName = null;
-        $className = class_exists($className) ? (new \ReflectionClass($className))->getName() : $className;
-
-        // A #[Table(name: ...)] says it.
-        if (class_exists($className)) {
-            foreach (array_reverse((new \ReflectionClass($className))->getAttributes(Table::class)) as $attribute) {
-                $table = $attribute->newInstance();
-                if (!empty($table->name)) {
-                    $tableName = $table->name;
-                    break;
-                }
-            }
-        }
-
-        if (!$tableName) {
-            // App\ or Base\ off, the first Entity\ off, the rest in camel case.
-            $tableName = self::lstrip($className, ['App\\', 'Base\\']);
-            $pos = strpos($tableName, 'Entity\\');
-            if (false !== $pos) {
-                $tableName = substr_replace($tableName, '', $pos, \strlen('Entity\\'));
-            }
-            if ('' === $tableName) {
-                $tableName = false !== strrpos($className, '\\') ? lcfirst(substr($className, strrpos($className, '\\') + 1)) : $className;
-            }
-
-            $tableName = str_replace('\\', '', $tableName);
-            $parts = array_unique(explode('_', self::camel2snake($tableName)));
-            $tableName = lcfirst(self::snake2camel(implode('_', $parts)));
-            $tableName = preg_replace('/'.self::TABLE_I18N_SUFFIX.'$/', self::TABLE_I18N_SUFFIX, $tableName);
-        }
-
-        if (\strlen($tableName) > self::TABLE_NAME_SIZE) {
-            throw new \LengthException(\sprintf('Table name will be truncated for "%s"', $className));
-        }
-
-        return $tableName;
+        return $this->naming->classToTableName($className);
     }
 
     public function propertyToColumnName(string $propertyName, string $className): string
     {
-        return lcfirst($propertyName);
+        return $this->naming->propertyToColumnName($propertyName, $className);
     }
 
     public function embeddedFieldToColumnName(string $propertyName, string $embeddedColumnName, string $className, string $embeddedClassName): string
     {
-        return lcfirst($propertyName).'_'.lcfirst($embeddedColumnName);
+        return $this->naming->embeddedFieldToColumnName($propertyName, $embeddedColumnName, $className, $embeddedClassName);
     }
 
     public function referenceColumnName(): string
     {
-        return 'id';
+        return $this->naming->referenceColumnName();
     }
 
     public function joinColumnName(string $propertyName, string $className): string
     {
-        return lcfirst($propertyName).'_'.lcfirst($this->referenceColumnName());
+        return $this->naming->joinColumnName($propertyName, $className);
     }
 
     public function joinTableName(string $sourceEntity, string $targetEntity, string $propertyName): string
     {
-        return lcfirst($this->classToTableName($sourceEntity)).'_'.lcfirst($this->classToTableName($propertyName ?: $targetEntity));
+        return $this->naming->joinTableName($sourceEntity, $targetEntity, $propertyName);
     }
 
     public function joinKeyColumnName(string $entityName, ?string $referencedColumnName): string
     {
-        return lcfirst($this->classToTableName($entityName)).'_'.lcfirst($referencedColumnName ?: $this->referenceColumnName());
-    }
-
-    /** omnibase's str_lstrip() with a list: every prefix off, again and again. */
-    private static function lstrip(string $haystack, array $prefixes): string
-    {
-        do {
-            $last = $haystack;
-            foreach ($prefixes as $prefix) {
-                while ('' !== $prefix && str_starts_with($haystack, $prefix)) {
-                    $haystack = substr($haystack, \strlen($prefix));
-                }
-            }
-        } while ($haystack !== $last);
-
-        return $haystack;
-    }
-
-    /** omnibase's camel2snake(). */
-    private static function camel2snake(string $input, string $separator = '_'): string
-    {
-        return mb_strtolower(str_replace($separator.$separator, $separator, str_replace('.'.$separator, '.', preg_replace('/(?<!^)[A-Z]/', $separator.'$0', str_replace(' ', $separator, $input)))));
-    }
-
-    /** omnibase's snake2camel(). */
-    private static function snake2camel(string $input, string $separator = '_'): string
-    {
-        $words = array_map(static fn (string $word) => mb_strtoupper(mb_substr($word, 0, 1)).mb_substr($word, 1), explode(' ', str_replace($separator, ' ', $input)));
-
-        return lcfirst(implode('', $words));
+        return $this->naming->joinKeyColumnName($entityName, $referencedColumnName);
     }
 }

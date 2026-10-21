@@ -3,10 +3,12 @@
 namespace Omnibridge\Doctrine\Tests;
 
 use Omnibridge\Doctrine\NamingStrategy;
+use Omnibridge\Schema\CamelCaseNaming;
 use PHPUnit\Framework\TestCase;
 
 /**
- * omnibase's names, against a real site's: every entity of lesringostars and
+ * omnibase's names (Omnibridge\Schema\CamelCaseNaming, answered to Doctrine by
+ * NamingStrategy), against a real site's: every entity of lesringostars and
  * the table omnibase gives it, its join tables and their columns
  * (lesringostars-tables.json, read from the Symfony site's entity manager).
  * The tables a class names itself (#[Table(name: ...)]) are read from the
@@ -24,16 +26,18 @@ final class NamingStrategyTest extends TestCase
     {
         $declared = array_map(static fn (array $row) => $row['table'], array_filter(self::site(), static fn (array $row) => $row['declared']));
 
-        return new class($declared) extends NamingStrategy {
+        // The naming answered through the strategy, as Doctrine asks it (one place: CamelCaseNaming).
+        return new NamingStrategy(new class($declared) extends CamelCaseNaming {
             public function __construct(private readonly array $declared)
             {
+                parent::__construct();
             }
 
             public function classToTableName(string $className): string
             {
                 return $this->declared[$className] ?? parent::classToTableName($className);
             }
-        };
+        });
     }
 
     public function testEveryTableOfTheSite(): void
