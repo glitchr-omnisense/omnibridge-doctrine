@@ -7,7 +7,7 @@ use Omnibridge\Schema\Declaration\Vocabulary;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The vocabulary omniscient/omnibridge holds as data is doctrine/orm's: every
+ * The vocabulary omnisense/omnibridge holds as data is doctrine/orm's: every
  * mapping attribute, its constructor's parameters in order, their defaults,
  * whether it repeats - compared with the installed doctrine/orm, class by
  * class. A new attribute or parameter upstream fails here, and the vocabulary

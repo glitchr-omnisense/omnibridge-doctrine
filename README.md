@@ -3,7 +3,7 @@
 The storage glue of omnibase sites, framework-free (plan 0, rule 13): what any
 framework needs to map an omnibase site's database with Doctrine ORM and find
 the same tables - and Doctrine reading the structure described outside of it
-(audit "lesringostars face au master plan", R14; omniscient/omnibridge's
+(audit "lesringostars face au master plan", R14; omnisense/omnibridge's
 `Omnibridge\Schema`).
 
 - `DeclarationDriver`: a Doctrine mapping driver that builds a class's metadata
@@ -20,7 +20,7 @@ the same tables - and Doctrine reading the structure described outside of it
   neutral form (`Omnibridge\Schema\Description`): each class as its metadata
   hold it, and the tables its SchemaTool would create. `DescriptionTest` proves
   it equal to the description `Omnibridge\Schema\Builder` builds from the
-  declarations alone; omniscient/omnibase's harness and lesringostars do the
+  declarations alone; omnisense/omnibase's harness and lesringostars do the
   same over their entities, and lesringostars compares it with its database's
   `information_schema`.
 - `NamingStrategy`: Doctrine's naming strategy answered by the family's naming
@@ -46,7 +46,7 @@ $entityManager = EntityManagers::create($connection, [$projectDir.'/src/Entity']
 });
 ```
 
-Requires omniscient/omnibridge (the Schema), doctrine/orm ^3.4 and doctrine/dbal
+Requires omnisense/omnibridge (the Schema), doctrine/orm ^3.4 and doctrine/dbal
 ^4.2 (tested on 3.7.5 and 4.5.0).
 
 ## glitchr/base-plugin's Doctrine hook (audited 2026-10-17)

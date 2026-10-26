@@ -1,6 +1,6 @@
 {
     "name": "omnibridge/doctrine",
-    "description": "The storage glue of omnibase sites, framework-free: Doctrine reading the structure described outside of it (omniscient/omnibridge's Omnibridge\\Schema), the naming strategy that turns their entities into their tables, the UTC date types, and an entity manager built with them, for any framework reading the same database.",
+    "description": "The storage glue of omnibase sites, framework-free: Doctrine reading the structure described outside of it (omnisense/omnibridge's Omnibridge\\Schema), the naming strategy that turns their entities into their tables, the UTC date types, and an entity manager built with them, for any framework reading the same database.",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -12,7 +12,7 @@
         "php": ">=8.2",
         "doctrine/dbal": "^4.2",
         "doctrine/orm": "^3.4",
-        "omniscient/omnibridge": "1.x-dev",
+        "omnisense/omnibridge": "1.x-dev",
         "symfony/cache": "^7.0|^8.0"
     },
     "require-dev": {

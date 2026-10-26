@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aac9ee42d1328e8b295c9c629148cb85",
+    "content-hash": "17f796c0d912453d24b745ece3d3a325",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -756,17 +756,17 @@
             "time": "2026-10-03T14:15:35+00:00"
         },
         {
-            "name": "omniscient/omnibridge",
+            "name": "omnisense/omnibridge",
             "version": "1.x-dev",
             "source": {
                 "type": "git",
-                "url": "https://github.com/glitchr-studio/omnibridge.git",
-                "reference": "4b6899968f10d05a7da99d2ae8ff21a43c393204"
+                "url": "https://github.com/glitchr-omnisense/omnibridge.git",
+                "reference": "242a293c3b9aa3de4cda8b335a883ee64e770998"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/glitchr-studio/omnibridge/zipball/4b6899968f10d05a7da99d2ae8ff21a43c393204",
-                "reference": "4b6899968f10d05a7da99d2ae8ff21a43c393204",
+                "url": "https://api.github.com/repos/glitchr-omnisense/omnibridge/zipball/242a293c3b9aa3de4cda8b335a883ee64e770998",
+                "reference": "242a293c3b9aa3de4cda8b335a883ee64e770998",
                 "shasum": ""
             },
             "require": {
@@ -774,6 +774,9 @@
                 "psr/clock": "^1.0",
                 "psr/container": "^1.1|^2.0",
                 "psr/event-dispatcher": "^1.0"
+            },
+            "replace": {
+                "omniscient/omnibridge": "self.version"
             },
             "require-dev": {
                 "phpunit/phpunit": "^11.5"
@@ -800,7 +803,7 @@
                 }
             ],
             "description": "The core of the omnibridge family: the contracts any host answers for an application that runs on more than one framework (addresses, translations, languages, access, sessions, tokens, stored files, routes, environment) and the registry the application reaches them through. No framework, no ORM: each omnibridge/<host> bridge answers them with its host's services.",
-            "homepage": "https://github.com/glitchr-studio/omnibridge",
+            "homepage": "https://github.com/glitchr-omnisense/omnibridge",
             "keywords": [
                 "contracts",
                 "framework-agnostic",
@@ -809,10 +812,10 @@
                 "symfony"
             ],
             "support": {
-                "issues": "https://github.com/glitchr-studio/omnibridge/issues",
-                "source": "https://github.com/glitchr-studio/omnibridge/tree/1.x"
+                "issues": "https://github.com/glitchr-omnisense/omnibridge/issues",
+                "source": "https://github.com/glitchr-omnisense/omnibridge/tree/1.x"
             },
-            "time": "2026-10-21T02:37:09+00:00"
+            "time": "2026-10-26T05:14:29+00:00"
         },
         {
             "name": "psr/cache",
@@ -4026,7 +4029,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "omniscient/omnibridge": 20
+        "omnisense/omnibridge": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

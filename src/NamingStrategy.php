@@ -7,7 +7,7 @@ use Omnibridge\Schema\Naming;
 
 /**
  * Doctrine's naming strategy answered by the family's Naming
- * (Omnibridge\Schema\Naming, omniscient/omnibridge): the names omnibase gives
+ * (Omnibridge\Schema\Naming, omnisense/omnibridge): the names omnibase gives
  * its tables and columns, for any framework mapping the same database -
  * App\Entity\Thread\Tag is threadTag, App\Entity\User\Profile userProfile,
  * Thread::$tags the join table thread_tags (thread_id, threadTag_id), a

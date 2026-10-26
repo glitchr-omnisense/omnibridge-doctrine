@@ -26,7 +26,7 @@ use Omnibridge\Schema\Declaration\Vocabulary;
  * The declaration is read as doctrine/orm 3's AttributeDriver reads the
  * attributes - the same calls on the ClassMetadata, in the same order, the
  * attributes instantiated from their arguments as written - so the metadata
- * are those it would build, to the property (the proof: omniscient/omnibase's
+ * are those it would build, to the property (the proof: omnisense/omnibase's
  * MetadataSnapshot, every class of lesringostars, on both hosts). Which
  * classes exist, and whether one is transient, stays the driver's it wraps
  * (an AttributeDriver's folders, DoctrineBundle's chain); a class its
