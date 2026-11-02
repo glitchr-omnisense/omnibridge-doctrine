@@ -49,6 +49,37 @@ $entityManager = EntityManagers::create($connection, [$projectDir.'/src/Entity']
 Requires omnisense/omnibridge (the Schema), doctrine/orm ^3.4 and doctrine/dbal
 ^4.2 (tested on 3.7.5 and 4.5.0).
 
+## omnibase's persistence on Doctrine (`Omnibridge\Doctrine\Omnibase\`)
+
+Since omnisense/omnibase's plan "omnibase agnostic", step F3 (2026-11-02), the core's Doctrine
+classes live here, in `src/Omnibase/`: 142 classes moved by one rule - `Base\Bridge\Doctrine\X` is
+`Omnibridge\Doctrine\Omnibase\X`, any other `Base\X` is `Omnibridge\Doctrine\Omnibase\X`:
+
+- the Doctrine adapters of omnibridge's persistence contracts (`DoctrineUnitOfWork`,
+  `DoctrineBackend`, `DoctrineRepositories`, `DoctrineShapes`, `QueryPages`, `MetadataDescription`'s
+  use), the behaviours' Doctrine backends (`Behaviour\*`: row locks, conditional updates, the entity
+  cache, bulk deletes, the vault, slugs, cache and order column) and their mapping hooks
+  (`Behaviour\DoctrineMappingHooks`: `#[Cache]`'s regions, `#[Vault]`'s unique constraints,
+  `#[OrderColumn]`'s field);
+- the mapping (`Mapping`, `MappingDriver`, `Configuration`, `Types`, `RepositoryFactory`, `Registry`,
+  `MetadataSnapshot`, `Database\Mapping\ClassMetadataManipulator`...), the DBAL types and adapters,
+  the DQL walkers and functions, the trash and vault filters, the platform middleware, the schema
+  describer;
+- the finder language's Doctrine compiler (`Database\Repository\ServiceEntityParser`) and
+  `ServiceEntityRepository`, and the core's 81 repositories (`Repository\*`);
+- the Doctrine listeners (`DatabaseSubscriber\*`, `EntitySubscriber\{Extension, Trasheable,
+  Versionable, Setting}Subscriber`) and `DoctrineLocator` (the registry and entity manager for the
+  core's host code).
+
+This part is loaded only with omnisense/omnibase, which requires this package (it is in `suggest`
+here, not `require`: the core already requires it). The core keeps the neutral half - the finder's
+parser and AST, the repository interfaces, the shapes, the enumerations, the behaviours'
+attributes - and **aliases every former name** (`src/Resources/former-names.php`), so the sites and
+bundles change nothing. An entity's `repositoryClass` may name one of the core's repository
+interfaces: `RepositoryFactory` builds the repository bound to it. This package's own suite tests the
+generic part (and that it names nothing of omnibase, `OmnibasePartTest`); omnibase's part is tested in
+the core's harness, which mounts this checkout. PHPStan leaves `src/Omnibase` to the core's analysis.
+
 ## glitchr/base-plugin's Doctrine hook (audited 2026-10-17)
 
 The hook rewrites three files of doctrine/orm:

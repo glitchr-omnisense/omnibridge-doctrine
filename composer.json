@@ -1,6 +1,6 @@
 {
     "name": "omnibridge/doctrine",
-    "description": "The storage glue of omnibase sites, framework-free: Doctrine reading the structure described outside of it (omnisense/omnibridge's Omnibridge\\Schema), the naming strategy that turns their entities into their tables, the UTC date types, and an entity manager built with them, for any framework reading the same database.",
+    "description": "The storage glue of omnibase sites, framework-free: Doctrine reading the structure described outside of it (omnisense/omnibridge's Omnibridge\\Schema), the naming strategy that turns their entities into their tables, the UTC date types, and an entity manager built with them, for any framework reading the same database; and omnibase's persistence on Doctrine (Omnibridge\\Doctrine\\Omnibase\\: its repositories, finder compiler, mapping, DBAL types, walkers, filters and listeners), which omnisense/omnibase requires.",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -17,6 +17,9 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^11.5"
+    },
+    "suggest": {
+        "omnisense/omnibase": "Omnibridge\\Doctrine\\Omnibase\\: omnibase's persistence on Doctrine, moved from the core (its former Base\\ names aliased by the core); loaded only with the core, which requires this package"
     },
     "autoload": {
         "psr-4": {

@@ -1,0 +1,16 @@
+<?php
+
+namespace Omnibridge\Doctrine\Omnibase\Repository\User;
+
+use App\Entity\User\Group;
+use Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository;
+
+/**
+ * @method Group|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Group|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Group[]    findAll()
+ * @method Group[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class GroupRepository extends ServiceEntityRepository
+{
+}

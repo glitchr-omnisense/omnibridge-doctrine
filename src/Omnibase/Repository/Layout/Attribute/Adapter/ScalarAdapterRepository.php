@@ -1,0 +1,18 @@
+<?php
+
+namespace Omnibridge\Doctrine\Omnibase\Repository\Layout\Attribute\Adapter;
+
+use Base\Entity\Layout\Attribute\Adapter\ScalarAdapter;
+
+use Omnibridge\Doctrine\Omnibase\Repository\Layout\Attribute\Adapter\Common\AbstractAdapterRepository;
+
+/**
+ * @method ScalarAdapter|null find($id, $lockMode = null, $lockVersion = null)
+ * @method ScalarAdapter|null findOneBy(array $criteria, ?array $orderBy = null)
+ * @method ScalarAdapter[]    findAll()
+ * @method ScalarAdapter[]    findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null)
+ */
+
+class ScalarAdapterRepository extends AbstractAdapterRepository
+{
+}

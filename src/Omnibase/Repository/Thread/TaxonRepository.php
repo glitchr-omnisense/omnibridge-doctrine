@@ -1,0 +1,16 @@
+<?php
+
+namespace Omnibridge\Doctrine\Omnibase\Repository\Thread;
+
+use Base\Entity\Thread\Tag;
+use Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository;
+
+/**
+ * @method Tag|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Tag|null findOneBy(array $criteria, ?array $orderBy = null)
+ * @method Tag[]    findAll()
+ * @method Tag[]    findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null)
+ */
+class TaxonRepository extends ServiceEntityRepository
+{
+}

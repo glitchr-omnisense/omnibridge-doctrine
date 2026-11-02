@@ -1,0 +1,18 @@
+<?php
+
+namespace Omnibridge\Doctrine\Omnibase\Repository\Layout\Attribute\Adapter;
+
+use Base\Entity\Layout\Attribute\Adapter\HyperpatternAdapter;
+
+use Omnibridge\Doctrine\Omnibase\Repository\Layout\Attribute\Adapter\Common\AbstractAdapterRepository;
+
+/**
+ * @method HyperpatternAdapter|null find($id, $lockMode = null, $lockVersion = null)
+ * @method HyperpatternAdapter|null findOneBy(array $criteria, ?array $orderBy = null)
+ * @method HyperpatternAdapter[]    findAll()
+ * @method HyperpatternAdapter[]    findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null)
+ */
+
+class HyperpatternAdapterRepository extends AbstractAdapterRepository
+{
+}

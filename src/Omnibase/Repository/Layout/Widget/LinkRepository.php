@@ -1,0 +1,18 @@
+<?php
+
+namespace Omnibridge\Doctrine\Omnibase\Repository\Layout\Widget;
+
+use Base\Entity\Layout\Widget\Link;
+
+use Omnibridge\Doctrine\Omnibase\Repository\Layout\WidgetRepository;
+
+/**
+ * @method Link|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Link|null findOneBy(array $criteria, ?array $orderBy = null)
+ * @method Link[]    findAll()
+ * @method Link[]    findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null)
+ */
+
+class LinkRepository extends WidgetRepository
+{
+}

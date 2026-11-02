@@ -9,4 +9,9 @@ parameters:
     paths:
         - src
         - tests
+    # omnibase's part (Omnibridge\Doctrine\Omnibase\, moved from omnisense/omnibase at its plan "omnibase
+    # agnostic"'s step F3) extends and calls the core's classes, which this package does not install (the
+    # core requires it): it is analysed with the core, in the core's CI and harness.
+    excludePaths:
+        - src/Omnibase
     reportUnmatchedIgnoredErrors: false

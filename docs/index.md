@@ -9,6 +9,10 @@ structure described outside of it (audit "lesringostars face au master plan", R1
 composer require omnibridge/doctrine
 ```
 
+- **omnibase's part**, `Omnibridge\Doctrine\Omnibase\` (`src/Omnibase/`): the core's Doctrine
+  classes, moved from omnisense/omnibase at its step F3 (repositories, finder compiler, mapping,
+  DBAL types, walkers, filters, listeners), loaded only with the core, which aliases their former
+  `Base\` names - see the README's section.
 - `DeclarationDriver`: a Doctrine mapping driver that builds a class's metadata from its declaration
   (`Omnibridge\Schema\Declaration`: what the class declares of its mapping, read without the ORM - or
   kept as data, a JSON file) instead of reading the attributes itself. It wraps the application's

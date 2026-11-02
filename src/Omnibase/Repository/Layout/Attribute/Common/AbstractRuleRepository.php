@@ -1,0 +1,18 @@
+<?php
+
+namespace Omnibridge\Doctrine\Omnibase\Repository\Layout\Attribute\Common;
+
+use Base\Entity\Layout\Attribute\Common\AbstractRule;
+
+use Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository;
+
+/**
+ * @method AbstractRule|null find($id, $lockMode = null, $lockVersion = null)
+ * @method AbstractRule|null findOneBy(array $criteria, ?array $orderBy = null)
+ * @method AbstractRule[]    findAll()
+ * @method AbstractRule[]    findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null)
+ */
+
+class AbstractRuleRepository extends ServiceEntityRepository
+{
+}
