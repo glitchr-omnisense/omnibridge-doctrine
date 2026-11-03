@@ -13,6 +13,7 @@ use Base\Database\Mapping\EntityShapes;
 use Omnibridge\Doctrine\Omnibase\DoctrineRepositories;
 use Omnibridge\Doctrine\Omnibase\DoctrineBackend;
 use Base\Database\Backend\BulkDeletes;
+use Base\Database\Backend\ColumnTypes;
 use Base\Database\Backend\ConditionalUpdates;
 use Base\Database\Backend\EntityCache;
 use Base\Database\Backend\RowLocks;
@@ -42,6 +43,8 @@ final class DoctrineBehaviours
         // Step F2e: the scopes (trash, vault) as Doctrine's filters, and deletes by criteria.
         Backend::class => DoctrineBackend::class,
         BulkDeletes::class => DoctrineBulkDeletes::class,
+        // Step F5c, item 3: which column types hold an array (EntityHydrator's defaults).
+        ColumnTypes::class => DoctrineColumnTypes::class,
     ];
 
     private static bool $registered = false;

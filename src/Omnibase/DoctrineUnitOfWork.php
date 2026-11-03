@@ -5,6 +5,7 @@ namespace Omnibridge\Doctrine\Omnibase;
 use Omnibridge\Doctrine\Omnibase\Behaviour\DoctrineBehaviours;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\UnitOfWork as DoctrineUnitOfWorkState;
+use Omnibridge\Persistence\Snapshots;
 use Omnibridge\Persistence\UnitOfWork;
 
 /**
@@ -12,7 +13,7 @@ use Omnibridge\Persistence\UnitOfWork;
  * F2): what the core's code asks where it spoke to the entity manager, and what the lifecycle events
  * the Doctrine relay dispatches carry. Moves to omnibridge/doctrine at step F3.
  */
-final class DoctrineUnitOfWork implements UnitOfWork
+final class DoctrineUnitOfWork implements UnitOfWork, Snapshots
 {
     public function __construct(private readonly EntityManagerInterface $entityManager)
     {
@@ -83,6 +84,12 @@ final class DoctrineUnitOfWork implements UnitOfWork
     public function className(object $entity): string
     {
         return $this->entityManager->getClassMetadata($entity::class)->getName();
+    }
+
+    /** Doctrine's original entity data (omnisense/omnibridge's Snapshots): the fields and to-one associations as read or last flushed. */
+    public function original(object $entity): array
+    {
+        return $this->entityManager->getUnitOfWork()->getOriginalEntityData($entity);
     }
 
     public function changes(object $entity): array

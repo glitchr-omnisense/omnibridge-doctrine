@@ -4,6 +4,7 @@ namespace Omnibridge\Doctrine\Omnibase\Database\Repository;
 
 use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataCompletor;
 use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;
+use Omnibridge\Doctrine\Omnibase\DoctrineUnitOfWork;
 use Base\Database\Entity\EntityHydrator;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -94,7 +95,7 @@ class ServiceEntityRepository extends EntityRepository implements Entities
         $this->classMetadata = $entityManager->getClassMetadata($entityName ?? $this->getFqcnEntityName());
         $this->classMetadataCompletor = $classMetadataManipulator->getClassMetadataCompletor($entityName ?? $this->getFqcnEntityName());
 
-        $entityHydrator = new EntityHydrator($entityManager, $classMetadataManipulator);
+        $entityHydrator = new EntityHydrator(new DoctrineUnitOfWork($entityManager), $classMetadataManipulator->getShapes());
         $this->serviceParser = new ServiceEntityParser(
             $this, $entityManager, $classMetadataManipulator, 
             $entityHydrator

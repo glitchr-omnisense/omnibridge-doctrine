@@ -129,7 +129,7 @@ final class Mapping
         }
 
         $manipulator = new ClassMetadataManipulator($registry, $entityManager, $cacheDir);
-        $hydrator = new EntityHydrator($entityManager, $manipulator);
+        $hydrator = new EntityHydrator(new DoctrineUnitOfWork($entityManager), $manipulator->getShapes());
         $flysystem = $options['flysystem'] ?? null;
         $reader = new AttributeReader(null, null, $entityManager, $parameters, $flysystem instanceof Storages ? $flysystem : null, null, null, $hydrator, $manipulator, $projectDir, $environment, $cacheDir);
 
