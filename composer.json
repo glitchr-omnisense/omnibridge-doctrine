@@ -10,9 +10,11 @@
     ],
     "require": {
         "php": ">=8.2",
+        "beberlei/doctrineextensions": "^1.0",
         "doctrine/dbal": "^4.2",
         "doctrine/orm": "^3.4",
         "omnisense/omnibridge": "1.x-dev",
+        "scienta/doctrine-json-functions": "~4.3",
         "symfony/cache": "^7.0|^8.0"
     },
     "require-dev": {

@@ -71,8 +71,10 @@ classes live here, in `src/Omnibase/`: 142 classes moved by one rule - `Base\Bri
   Versionable, Setting}Subscriber`) and `DoctrineLocator` (the registry and entity manager for the
   core's host code).
 
-This part is loaded only with omnisense/omnibase, which requires this package (it is in `suggest`
-here, not `require`: the core already requires it). The core keeps the neutral half - the finder's
+This part is loaded only with omnisense/omnibase (in `suggest` here, not `require`). omnibase 4.x
+requires this package; since omnibase 5.0 the application does (the core suggests it), and this package
+requires the DQL functions the part registers, beberlei/doctrineextensions and
+scienta/doctrine-json-functions. The core keeps the neutral half - the finder's
 parser and AST, the repository interfaces, the shapes, the enumerations, the behaviours'
 attributes - and **aliases every former name** (`src/Resources/former-names.php`), so the sites and
 bundles change nothing. An entity's `repositoryClass` may name one of the core's repository
