@@ -39,7 +39,8 @@ final class OmnibasePartTest extends TestCase
         foreach ($files as $relative => $code) {
             $expected = 'Omnibridge\\Doctrine\\Omnibase\\'.str_replace('/', '\\', substr($relative, 0, -4));
             preg_match('/^namespace ([^;]+);/m', $code, $namespace);
-            preg_match('/^(?:(?:abstract|final|readonly) )*(?:class|interface|trait|enum) (\w+)/m', $code, $class);
+            // Indented where the declaration is conditional (Repository\User\CoreComplaints: the core's interface where it has one).
+            preg_match('/^[ ]*(?:(?:abstract|final|readonly) )*(?:class|interface|trait|enum) (\w+)/m', $code, $class);
             $declared = ($namespace[1] ?? '').'\\'.($class[1] ?? '');
             if ($declared !== $expected) {
                 $wrong[] = $relative.' declares '.$declared;

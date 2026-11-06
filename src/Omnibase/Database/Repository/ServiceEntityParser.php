@@ -7,6 +7,7 @@ use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;
 use Omnibridge\Doctrine\Omnibase\Database\Event\DoctrineQueryEventArgs;
 use Base\Database\Events;
 use Base\Database\Repository\Finder\Group;
+use Base\Database\Repository\Finder\Key;
 use Base\Database\Repository\Finder\Parser;
 use Base\Database\Repository\Finder\Query as FinderQuery;
 use Base\Database\Repository\Finder\Subject;
@@ -647,6 +648,11 @@ class ServiceEntityParser implements Subject
         $fieldRoot = implode(self::SEPARATOR, array_slice($field, count($field) - 2, 2));
         $fieldHead = explode(".", $fieldName)[0];
 
+        // A to-one association compared by its own key (Finder\Key, omnibase 5.x, step E2b): no join.
+        if ($fieldValue instanceof Key) {
+            return $this->keyExpression($queryBuilder, $fieldName, $fieldRoot, $fieldID, $fieldValue);
+        }
+
         $isNull = $this->findCustomOption($fieldRoot, self::OPTION_NULL);
         $isNotNull = $this->findCustomOption($fieldRoot, self::OPTION_NOT_NULL);
         $isEmpty = $this->findCustomOption($fieldRoot, self::OPTION_EMPTY);
@@ -1190,6 +1196,39 @@ class ServiceEntityParser implements Subject
         }
 
         throw new Exception("Failed to build expression \"" . $field . "\": " . $fieldValue);
+    }
+
+    /**
+     * A key criterion (Finder\Key, step E2b): the association's own foreign key, `e.thread = :key`,
+     * `IN`, `IS NULL` (NotEqualTo: `<>`, `NOT IN`, `IS NOT NULL`), with no join - so no filter of the
+     * associated entity (the trash's, in a join's ON) decides the row, as a hand-written
+     * `c.thread = :thread` did not. An empty list adds no condition, as any list of the language.
+     * The Parser has refused a path and any other word.
+     *
+     * @throws Exception a field that is no single-valued association of the entity
+     */
+    protected function keyExpression(QueryBuilder $queryBuilder, string $fieldName, string $fieldRoot, string $fieldID, Key $key): mixed
+    {
+        if (!$this->classMetadata->hasAssociation($fieldName) || !$this->classMetadata->isSingleValuedAssociation($fieldName)) {
+            throw new Exception("A key criterion compares a to-one association of \"" . $this->classMetadata->getName() . "\", which \"" . $fieldName . "\" is not");
+        }
+
+        $not = $this->findCustomOption($fieldRoot, self::OPTION_NOT_EQUAL);
+        $column = self::ALIAS_ENTITY . "." . $fieldName;
+        if ($key->isNull()) {
+            return $not ? $queryBuilder->expr()->isNotNull($column) : $queryBuilder->expr()->isNull($column);
+        }
+        if ($key->isList() && !$key->value) {
+            return null;
+        }
+
+        $parameter = "key_" . $fieldID;
+        $queryBuilder->setParameter($parameter, $key->value);
+        if ($key->isList()) {
+            return $not ? $queryBuilder->expr()->notIn($column, ":" . $parameter) : $queryBuilder->expr()->in($column, ":" . $parameter);
+        }
+
+        return $not ? $queryBuilder->expr()->neq($column, ":" . $parameter) : $queryBuilder->expr()->eq($column, ":" . $parameter);
     }
 
     protected static int $i = 0;

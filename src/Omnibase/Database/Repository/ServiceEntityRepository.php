@@ -113,6 +113,16 @@ class ServiceEntityRepository extends EntityRepository implements Entities
     }
 
     /**
+     * Whether the core's finder language compares an association by its key without a join
+     * (Finder\Key): omnisense/omnibase 5.x, plan "omnibase agnostic", step E2b. Under 4.x a method
+     * written on it keeps its former query.
+     */
+    protected static function finderReadsKeys(): bool
+    {
+        return class_exists(\Base\Database\Repository\Finder\Key::class);
+    }
+
+    /**
      * @return ClassMetadata|null
      */
     public function getClassMetadata(): ClassMetadata

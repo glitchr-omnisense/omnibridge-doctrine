@@ -7,6 +7,7 @@ use Base\Entity\Thread;
 use Base\Entity\Thread\Comment;
 use Base\Enum\CommentState;
 use Base\Repository\Thread\Comments;
+use Base\Database\Repository\Finder\Key;
 
 /**
  * @method Comment|null find($id, $lockMode = null, $lockVersion = null)
@@ -24,6 +25,11 @@ class CommentRepository extends ServiceEntityRepository implements Comments
      */
     public function findVisible(?Thread $thread, int $limit = 200): array
     {
+        if (self::finderReadsKeys()) {
+            return $this->findBy($this->visible($thread) + ['parent' => Key::of(null)], ['createdAt' => 'DESC'], $limit);
+        }
+
+        // omnisense/omnibase 4.x: the query of before.
         $query = $this->createQueryBuilder('c')
             ->andWhere('c.state = :approved')->setParameter('approved', CommentState::APPROVED)
             ->andWhere('c.parent IS NULL')
@@ -36,11 +42,29 @@ class CommentRepository extends ServiceEntityRepository implements Comments
 
     public function countVisible(?Thread $thread): int
     {
+        if (self::finderReadsKeys()) {
+            return $this->count($this->visible($thread));
+        }
+
+        // omnisense/omnibase 4.x: the query of before.
         $query = $this->createQueryBuilder('c')->select('COUNT(c.id)')
             ->andWhere('c.state = :approved')->setParameter('approved', CommentState::APPROVED);
         $query = $thread ? $query->andWhere('c.thread = :thread')->setParameter('thread', $thread) : $query->andWhere('c.thread IS NULL');
 
         return (int) $query->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * The criteria of the comments online under a thread, the visitors' book for null (step E2b):
+     * the thread compared by its key - `c.thread = :thread`, `c.thread IS NULL` - and not through a
+     * join, where Doctrine puts Thread's trash filter: a comment under a trashed thread would read
+     * as one of the visitors' book.
+     *
+     * @return array<string, mixed>
+     */
+    private function visible(?Thread $thread): array
+    {
+        return ['state' => CommentState::APPROVED, 'thread' => Key::of($thread)];
     }
 
     public function countPending(): int

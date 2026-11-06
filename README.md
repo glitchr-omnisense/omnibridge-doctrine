@@ -66,7 +66,13 @@ classes live here, in `src/Omnibase/`: 142 classes moved by one rule - `Base\Bri
   the DQL walkers and functions, the trash and vault filters, the platform middleware, the schema
   describer;
 - the finder language's Doctrine compiler (`Database\Repository\ServiceEntityParser`) and
-  `ServiceEntityRepository`, and the core's 81 repositories (`Repository\*`);
+  `ServiceEntityRepository`, and the core's 81 repositories (`Repository\*`). The compiler reads what
+  the core's finder adds at 5.0 and keeps a 4.x core's queries without it: groups and aggregates
+  (step E2, `finderReadsGroups()`), an association compared by its key with no join (`Finder\Key`,
+  step E2b: `e.thread = :key_thread`, `IS NULL`, `IN`; `finderReadsKeys()`, on which
+  `CommentRepository::findVisible()`/`countVisible()` are written). `ComplaintRepository` implements
+  `Repository\User\CoreComplaints`: the core's `Complaints` under 5.x, `Entities` under 4.x, which has
+  no such interface (step E2');
 - the Doctrine listeners (`DatabaseSubscriber\*`, `EntitySubscriber\{Extension, Trasheable,
   Versionable, Setting}Subscriber`) and `DoctrineLocator` (the registry and entity manager for the
   core's host code).
