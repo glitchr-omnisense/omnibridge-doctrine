@@ -14,10 +14,7 @@ class ScopedWeekRepository extends ServiceEntityRepository implements ScopedWeek
 {
     public function ofScope(string $scope): ?ScopedWeek
     {
-        return $this->createQueryBuilder('w')
-            ->andWhere('w.scope = :scope')->setParameter('scope', $scope)
-            ->setMaxResults(1)
-            ->getQuery()->getOneOrNullResult();
+        return $this->findOneBy(['scope' => $scope]);
     }
 
     /** @return array<int, array<array{0: string, 1: string}>>|null the place's week, all seven days; null: it follows the site's */

@@ -11,6 +11,7 @@ use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Base\Repository\Users;
+use Base\Database\Repository\Finder\Group;
 
 /**
  * @method User|null find($id, $lockMode = null, $lockVersion = null)
@@ -64,12 +65,8 @@ class UserRepository extends ServiceEntityRepository implements SecurityUserLoad
             return [];
         }
 
-        return $this->createQueryBuilder('u')
-            ->where('LOWER(u.username) LIKE :term')
-            ->setParameter('term', '%' . addcslashes(mb_strtolower($term), '%_') . '%')
-            ->orderBy('u.username', 'ASC')
-            ->setMaxResults($limit)
-            ->getQuery()->getResult();
+        // LOWER(username) LIKE %term%, the term's own % and _ taken literally.
+        return $this->findByInsensitivePartialUsername('%' . addcslashes(mb_strtolower($term), '%_') . '%', [], ['username' => 'ASC'], $limit)->getResult();
     }
 
     public function supportsClass(string $class): bool
@@ -123,10 +120,27 @@ class UserRepository extends ServiceEntityRepository implements SecurityUserLoad
      */
     public function findActiveAdmins(int $onlineDelay, ?int $excludeId = null): array
     {
+        $threshold = new \DateTime($onlineDelay . ' seconds ago');
+        if (!self::finderReadsGroups()) {
+            return $this->activeAdminsByQueryBuilder($threshold, $excludeId);
+        }
+
+        // activeAt > threshold AND (roles LIKE %ROLE_ADMIN% OR roles LIKE %ROLE_SUPERADMIN%) [AND id != excludeId]
+        $criteria = [Group::by('PartialRolesOrPartialRoles', '%ROLE_ADMIN%', '%ROLE_SUPERADMIN%')];
+
+        return (null === $excludeId
+            ? $this->findByActiveAtGreaterThan($threshold, $criteria, ['activeAt' => 'DESC'])
+            : $this->findByActiveAtGreaterThanAndIdNotEqualTo($threshold, $excludeId, $criteria, ['activeAt' => 'DESC'])
+        )->getResult();
+    }
+
+    /** findActiveAdmins() under omnisense/omnibase 4.x, whose finder has no groups: the query of before step E2. */
+    private function activeAdminsByQueryBuilder(\DateTime $threshold, ?int $excludeId): array
+    {
         $qb = $this->createQueryBuilder('u')
             ->andWhere('u.activeAt > :threshold')
             ->andWhere('u.roles LIKE :roleAdmin OR u.roles LIKE :roleSuperadmin')
-            ->setParameter('threshold', new \DateTime($onlineDelay . ' seconds ago'))
+            ->setParameter('threshold', $threshold)
             ->setParameter('roleAdmin', '%ROLE_ADMIN%')
             ->setParameter('roleSuperadmin', '%ROLE_SUPERADMIN%')
             ->orderBy('u.activeAt', 'DESC');
@@ -143,16 +157,10 @@ class UserRepository extends ServiceEntityRepository implements SecurityUserLoad
     {
         if(empty($fields)) $fields[] = User::getUserIdentifierField();
 
-        $identifier = preg_replace("/%$/", "", $identifier);
-        $qb = $this->createQueryBuilder('u')
-            ->setCacheable($cacheable)
-            ->setCacheRegion($this->getClassMetadata()->cache["region"] ?? null)
-            ->setParameter('identifier', "%".strtolower($identifier)."%");
+        // LOWER(<field>) LIKE %identifier% on any of the fields: a finder of the language, one criterion per field.
+        $identifier = "%".strtolower(preg_replace("/%$/", "", $identifier))."%";
+        $finder = ($cacheable ? "cacheBy" : "findBy") . implode("Or", array_map(static fn (string $field) => "InsensitivePartial".ucfirst($field), $fields));
 
-        foreach($fields as $field) {
-            $qb->orWhere('LOWER(u.'.$field.') LIKE :identifier');
-        }
-
-        return $qb->getQuery();
+        return $this->{$finder}(...array_fill(0, \count($fields), $identifier));
     }
 }

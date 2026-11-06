@@ -16,7 +16,7 @@ use Doctrine\DBAL\Types\Type;
  * object that is a UUID (a Stringable, as Symfony's Uuid) is written as its
  * text.
  */
-final class Aaguid extends Type
+final class Aaguid extends Type implements \Omnibridge\Doctrine\Omnibase\Database\Type\ConvertedInCriteria
 {
     public const NAME = 'passkey_aaguid';
 

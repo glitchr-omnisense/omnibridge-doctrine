@@ -3,6 +3,7 @@
 namespace Omnibridge\Doctrine\Omnibase\Repository\Analytics;
 
 use Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository;
+use Base\Database\Repository\BackendOnly;
 use Base\Entity\Analytics\PageVisit;
 use Doctrine\DBAL\ArrayParameterType;
 use Base\Repository\Analytics\PageVisits;
@@ -16,6 +17,7 @@ class PageVisitRepository extends ServiceEntityRepository implements PageVisits
      * Insert-if-absent, bucketed to the hour - same contract as
      * VisitRepository::recordPresence(), with the page added.
      */
+    #[BackendOnly('doctrine', 'native SQL: INSERT IGNORE (INSERT OR IGNORE, ON CONFLICT DO NOTHING)')]
     public function recordPresence(string $path, string $subjectType, string $subjectId, \DateTimeImmutable $date): void
     {
         // UTC before bucketing, whatever the process default is: BaseBundle
@@ -48,6 +50,7 @@ class PageVisitRepository extends ServiceEntityRepository implements PageVisits
      *
      * @param string|string[]|null $path
      */
+    #[BackendOnly('doctrine', 'native SQL: COUNT(*) over a DISTINCT subquery of three columns')]
     public function countUnique(?\DateTimeImmutable $since = null, string|array|null $path = null): int
     {
         [$where, $params, $types] = $this->filters($since, $path);
@@ -69,6 +72,7 @@ class PageVisitRepository extends ServiceEntityRepository implements PageVisits
      *
      * @return array<string, int> date (Y-m-d) => unique views
      */
+    #[BackendOnly('doctrine', 'native SQL: a DISTINCT subquery grouped by DATE()')]
     public function dailyBreakdown(\DateTimeImmutable $since, string|array|null $path = null): array
     {
         [$where, $params, $types] = $this->filters($since, $path);
@@ -87,6 +91,7 @@ class PageVisitRepository extends ServiceEntityRepository implements PageVisits
      *
      * @return array<string, int> hour ("Y-m-d H:i:s") => unique views
      */
+    #[BackendOnly('doctrine', 'native SQL: a DISTINCT subquery grouped by the hour bucket')]
     public function hourlyBreakdown(\DateTimeImmutable $since, string|array|null $path = null): array
     {
         [$where, $params, $types] = $this->filters($since, $path);

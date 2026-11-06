@@ -17,7 +17,7 @@ use Doctrine\DBAL\Types\Type;
  * own name, so that a site keeping the bundle keeps the bundle's type too.
  * PHP's value is the bytes, a string.
  */
-final class Base64 extends Type
+final class Base64 extends Type implements \Omnibridge\Doctrine\Omnibase\Database\Type\ConvertedInCriteria
 {
     public const NAME = 'passkey_base64';
 

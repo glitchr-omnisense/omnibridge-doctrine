@@ -23,30 +23,12 @@ class TrashBallRepository extends ServiceEntityRepository implements TrashBalls
      */
     public function contents(?string $entityClass = null, ?int $limit = null, int $offset = 0): array
     {
-        $queryBuilder = $this->createQueryBuilder("t")
-            ->orderBy("t.id", "DESC")
-            ->setFirstResult($offset);
-
-        if ($entityClass !== null) {
-            $queryBuilder->andWhere("t.entityClass = :class")->setParameter("class", $entityClass);
-        }
-
-        if ($limit !== null) {
-            $queryBuilder->setMaxResults($limit);
-        }
-
-        return $queryBuilder->getQuery()->getResult();
+        return $this->findBy(null === $entityClass ? [] : ['entityClass' => $entityClass], ['id' => 'DESC'], $limit, $offset);
     }
 
     public function countContents(?string $entityClass = null): int
     {
-        $queryBuilder = $this->createQueryBuilder("t")->select("COUNT(t.id)");
-
-        if ($entityClass !== null) {
-            $queryBuilder->andWhere("t.entityClass = :class")->setParameter("class", $entityClass);
-        }
-
-        return (int) $queryBuilder->getQuery()->getSingleScalarResult();
+        return $this->count(null === $entityClass ? [] : ['entityClass' => $entityClass]);
     }
 
     /**
@@ -56,16 +38,8 @@ class TrashBallRepository extends ServiceEntityRepository implements TrashBalls
      */
     public function expired(?DateTimeInterface $now = null, ?int $limit = null): array
     {
-        $queryBuilder = $this->createQueryBuilder("t")
-            ->andWhere("t.permanentAfter IS NOT NULL")
-            ->andWhere("t.permanentAfter <= :now")->setParameter("now", $now ?? new DateTime())
-            ->orderBy("t.permanentAfter", "ASC");
-
-        if ($limit !== null) {
-            $queryBuilder->setMaxResults($limit);
-        }
-
-        return $queryBuilder->getQuery()->getResult();
+        // permanentAfter <= now, which no row without a date meets.
+        return $this->findByPermanentAfterLowerEqualTo($now ?? new DateTime(), [], ['permanentAfter' => 'ASC'], $limit)->getResult();
     }
 
     /**
@@ -73,11 +47,6 @@ class TrashBallRepository extends ServiceEntityRepository implements TrashBalls
      */
     public function forEntity(string $entityClass, int $entityId): ?TrashBall
     {
-        return $this->createQueryBuilder("t")
-            ->andWhere("t.entityClass = :class")->setParameter("class", $entityClass)
-            ->andWhere("t.entityId = :id")->setParameter("id", $entityId)
-            ->orderBy("t.id", "DESC")
-            ->setMaxResults(1)
-            ->getQuery()->getOneOrNullResult();
+        return $this->findOneBy(['entityClass' => $entityClass, 'entityId' => $entityId], ['id' => 'DESC']);
     }
 }

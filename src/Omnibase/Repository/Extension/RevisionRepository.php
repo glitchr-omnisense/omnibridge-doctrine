@@ -26,16 +26,7 @@ class RevisionRepository extends ServiceEntityRepository implements Revisions
      */
     public function history(string $entityClass, int $entityId, ?int $limit = null): array
     {
-        $queryBuilder = $this->createQueryBuilder("r")
-            ->andWhere("r.entityClass = :class")->setParameter("class", $entityClass)
-            ->andWhere("r.entityId = :id")->setParameter("id", $entityId)
-            ->orderBy("r.id", "DESC");
-
-        if ($limit !== null) {
-            $queryBuilder->setMaxResults($limit);
-        }
-
-        return $queryBuilder->getQuery()->getResult();
+        return $this->findBy(['entityClass' => $entityClass, 'entityId' => $entityId], ['id' => 'DESC'], $limit);
     }
 
     /**
@@ -54,15 +45,9 @@ class RevisionRepository extends ServiceEntityRepository implements Revisions
             return [];
         }
 
-        $ids = $this->createQueryBuilder("r")
-            ->select("r.id")
-            ->andWhere("r.entityClass = :class")->setParameter("class", $entityClass)
-            ->andWhere("r.entityId = :id")->setParameter("id", $entityId)
-            ->orderBy("r.id", "DESC")
-            ->setFirstResult($keep)
-            ->setMaxResults(1000)
-            ->getQuery()->getScalarResult();
+        // Past the $keep newest, a thousand at most per flush.
+        $obsolete = $this->findBy(['entityClass' => $entityClass, 'entityId' => $entityId], ['id' => 'DESC'], 1000, $keep);
 
-        return array_map("intval", array_column($ids, "id"));
+        return array_map(static fn (Revision $revision): int => (int) $revision->getId(), $obsolete);
     }
 }

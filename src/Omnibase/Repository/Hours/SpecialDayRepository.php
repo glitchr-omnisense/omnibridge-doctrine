@@ -19,13 +19,12 @@ class SpecialDayRepository extends ServiceEntityRepository implements SpecialDay
      */
     public function upcoming(\DateTimeInterface $from, int $limit = 50, ?string $scope = null): array
     {
-        $qb = $this->createQueryBuilder('s')
-            ->andWhere('s.endsOn >= :from')->setParameter('from', $from->format('Y-m-d'))
-            ->orderBy('s.startsOn', 'ASC')->setMaxResults($limit);
-        null === $scope
-            ? $qb->andWhere('s.scope IS NULL')
-            : $qb->andWhere('s.scope = :scope')->setParameter('scope', $scope);
+        // The days are kept as Y-m-d text, which sorts and compares as the dates do.
+        $from = $from->format('Y-m-d');
 
-        return $qb->getQuery()->getResult();
+        return (null === $scope
+            ? $this->findByEndsOnGreaterEqualToAndScopeNull($from, [], ['startsOn' => 'ASC'], $limit)
+            : $this->findByEndsOnGreaterEqualTo($from, ['scope' => $scope], ['startsOn' => 'ASC'], $limit)
+        )->getResult();
     }
 }

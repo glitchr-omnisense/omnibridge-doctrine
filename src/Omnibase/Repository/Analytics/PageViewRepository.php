@@ -3,6 +3,7 @@
 namespace Omnibridge\Doctrine\Omnibase\Repository\Analytics;
 
 use Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository;
+use Base\Database\Repository\BackendOnly;
 use Base\Entity\Analytics\PageView;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
@@ -30,6 +31,7 @@ class PageViewRepository extends ServiceEntityRepository implements PageViews
      * something pre-bucketed, same as it used to pass a raw "today" before
      * PageView moved from daily to hourly grain.
      */
+    #[BackendOnly('doctrine', 'native SQL: an upsert, ON DUPLICATE KEY UPDATE on MySQL, ON CONFLICT elsewhere')]
     public function incrementView(string $path, \DateTimeImmutable $date, string $source = PageView::SOURCE_HUMAN): void
     {
         // UTC before bucketing, whatever the process default is: BaseBundle
@@ -62,20 +64,23 @@ class PageViewRepository extends ServiceEntityRepository implements PageViews
      */
     public function countViews(?string $path = null, ?\DateTimeImmutable $since = null, ?string $source = null): int
     {
-        $qb = $this->createQueryBuilder("pv")
-            ->select("COALESCE(SUM(pv.views), 0)");
+        $criteria = array_filter(["path" => $path, "source" => $source], static fn ($value) => null !== $value);
+        if (!self::finderReadsGroups()) {
+            $qb = $this->createQueryBuilder("pv")->select("COALESCE(SUM(pv.views), 0)");
+            foreach ($criteria as $field => $value) {
+                $qb->andWhere("pv." . $field . " = :" . $field)->setParameter($field, $value);
+            }
+            if ($since !== null) {
+                $qb->andWhere("pv.date >= :since")->setParameter("since", $since);
+            }
 
-        if ($path !== null) {
-            $qb->andWhere("pv.path = :path")->setParameter("path", $path);
-        }
-        if ($since !== null) {
-            $qb->andWhere("pv.date >= :since")->setParameter("since", $since);
-        }
-        if ($source !== null) {
-            $qb->andWhere("pv.source = :source")->setParameter("source", $source);
+            return (int) $qb->getQuery()->getSingleScalarResult();
         }
 
-        return (int) $qb->getQuery()->getSingleScalarResult();
+        // SUM(views), null without a row.
+        $views = null === $since ? $this->sumOfViewsBy($criteria) : $this->sumOfViewsByDateGreaterEqualTo($since, $criteria);
+
+        return (int) ($views ?? 0);
     }
 
     /**
@@ -91,10 +96,9 @@ class PageViewRepository extends ServiceEntityRepository implements PageViews
      */
     public function earliestDate(): ?\DateTimeImmutable
     {
-        $date = $this->createQueryBuilder("pv")
-            ->select("MIN(pv.date)")
-            ->getQuery()
-            ->getSingleScalarResult();
+        $date = self::finderReadsGroups()
+            ? $this->minOfDate()
+            : $this->createQueryBuilder("pv")->select("MIN(pv.date)")->getQuery()->getSingleScalarResult();
 
         // Stored in UTC, so read back as UTC.
         return $date ? new \DateTimeImmutable(substr((string) $date, 0, 10), new \DateTimeZone("UTC")) : null;
@@ -121,6 +125,7 @@ class PageViewRepository extends ServiceEntityRepository implements PageViews
      *        for a whole-class rollup rather than one instance), or null
      *        for site-wide
      */
+    #[BackendOnly('doctrine', 'native SQL: SUM() grouped by DATE(), which DQL has no function for')]
     public function dailyBreakdown(\DateTimeImmutable $since, string|array|null $path = null): array
     {
         [$where, $params, $types] = $this->pathFilter($path);
@@ -160,6 +165,7 @@ class PageViewRepository extends ServiceEntityRepository implements PageViews
     /**
      * @param string|string[]|null $path see dailyBreakdown()'s own docblock
      */
+    #[BackendOnly('doctrine', 'native SQL: SUM() grouped by DATE() and source')]
     public function dailyBreakdownBySource(\DateTimeImmutable $since, string|array|null $path = null): array
     {
         [$where, $params, $types] = $this->pathFilter($path);
@@ -199,6 +205,7 @@ class PageViewRepository extends ServiceEntityRepository implements PageViews
     /**
      * @param string|string[]|null $path see dailyBreakdown()'s own docblock
      */
+    #[BackendOnly('doctrine', 'native SQL: SUM() grouped by the hour bucket, rows as arrays')]
     public function hourlyBreakdown(\DateTimeImmutable $since, string|array|null $path = null): array
     {
         [$where, $params, $types] = $this->pathFilter($path);
@@ -230,6 +237,7 @@ class PageViewRepository extends ServiceEntityRepository implements PageViews
     /**
      * @param string|string[]|null $path see dailyBreakdown()'s own docblock
      */
+    #[BackendOnly('doctrine', 'native SQL: SUM() grouped by the hour bucket and source')]
     public function hourlyBreakdownBySource(\DateTimeImmutable $since, string|array|null $path = null): array
     {
         [$where, $params, $types] = $this->pathFilter($path);

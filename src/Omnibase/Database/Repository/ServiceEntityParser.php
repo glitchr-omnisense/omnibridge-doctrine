@@ -6,12 +6,15 @@ use Base\Database\Entity\EntityHydrator;
 use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;
 use Omnibridge\Doctrine\Omnibase\Database\Event\DoctrineQueryEventArgs;
 use Base\Database\Events;
+use Base\Database\Repository\Finder\Group;
 use Base\Database\Repository\Finder\Parser;
 use Base\Database\Repository\Finder\Query as FinderQuery;
 use Base\Database\Repository\Finder\Subject;
 use Base\Service\Model\IntlDateTime;
 use DateTime;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;
+use Omnibridge\Doctrine\Omnibase\Database\Type\ConvertedInCriteria;
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\MappingException;
@@ -359,6 +362,39 @@ class ServiceEntityParser implements Subject
 
 
     /**
+     * The aggregates (step E2): sumOf<Column>By..., minOf<Column>By..., maxOf<Column>By... -
+     * SUM(), MIN() or MAX() of the column over the rows the criteria select, the database's
+     * value as it gives it (a numeric string, a date as text), null when no row matches.
+     */
+    protected function __sumOfBy(array $criteria = []): mixed
+    {
+        return $this->aggregate('SUM', $criteria);
+    }
+
+    protected function __minOfBy(array $criteria = []): mixed
+    {
+        return $this->aggregate('MIN', $criteria);
+    }
+
+    protected function __maxOfBy(array $criteria = []): mixed
+    {
+        return $this->aggregate('MAX', $criteria);
+    }
+
+    protected function aggregate(string $function, array $criteria): mixed
+    {
+        $column = $this->getAlias($this->getColumn());
+        if (!$this->classMetadata->hasField($column)) {
+            throw new Exception("\"" . $function . "\" needs a field of \"" . $this->classMetadata->getName() . "\", not \"" . $column . "\"");
+        }
+
+        $queryBuilder = $this->getQueryBuilder($criteria);
+        $queryBuilder->select($function . '(' . self::ALIAS_ENTITY . '.' . $column . ')')->resetDQLPart('orderBy');
+
+        return $queryBuilder->getQuery()->getSingleScalarResult();
+    }
+
+    /**
      * Reads a finder's name and arguments into the finder language's neutral form
      * (Finder\Parser), nothing run.
      *
@@ -569,6 +605,23 @@ class ServiceEntityParser implements Subject
         }
 
         return $type;
+    }
+
+    /**
+     * The type an equality on one value is bound with when the field's type converts it
+     * (ConvertedInCriteria: the passkeys' base64 and AAGUID columns), as Doctrine's findBy()
+     * binds it; null otherwise, the finder's own binding kept (step E2).
+     */
+    protected function convertedTypeOf(string $fieldHead, mixed $fieldValue): ?string
+    {
+        // Under omnisense/omnibase 4.x (no Finder\Group) the finder binds as it always did: 4.x stays as it was.
+        if (!is_scalar($fieldValue) || !$this->classMetadata->hasField($fieldHead) || !class_exists(Group::class)) {
+            return null;
+        }
+
+        $type = $this->classMetadata->getTypeOfField($fieldHead);
+
+        return \is_string($type) && Type::hasType($type) && Type::getType($type) instanceof ConvertedInCriteria ? $type : null;
     }
 
     /**
@@ -993,7 +1046,12 @@ class ServiceEntityParser implements Subject
                 }
 
             } elseif (!$isEmpty && !$isNotEmpty && !$isBool && !$isNull && !$isNotNull) {
-                $queryBuilder->setParameter($fieldID, $this->boundValueOf($fieldHead, $fieldValue), $this->dateTypeOf($fieldHead, $fieldValue));
+                $type = $this->dateTypeOf($fieldHead, $fieldValue);
+                if ($type === null && !$isPartial && !$isInsensitive && in_array($tableOperator, [self::OPTION_EQUAL, self::OPTION_NOT_EQUAL], true)) {
+                    $type = $this->convertedTypeOf($fieldHead, $fieldValue);
+                }
+
+                $queryBuilder->setParameter($fieldID, $this->boundValueOf($fieldHead, $fieldValue), $type);
             }
             
             if ($isInsensitive) {
@@ -1161,6 +1219,12 @@ class ServiceEntityParser implements Subject
 
         // Prepare criteria variable
         foreach ($criteria as $field => $fieldValue) {
+            // A group (Group::by(), step E2): its members in parentheses, joined by its own separator.
+            if ($fieldValue instanceof Group) {
+                $this->where($queryBuilder, $this->groupExpression($queryBuilder, 'group' . $field, $fieldValue));
+                continue;
+            }
+
             $field = explode(self::SEPARATOR, $field);
             $fieldName = $field[0];
 
@@ -1212,22 +1276,7 @@ class ServiceEntityParser implements Subject
                 }
             }
 
-            if ($queryExpr !== null) {
-                // Apply logical operator (if needed)
-                $separator = $this->getSeparator();
-                switch ($separator) {
-                    case self::SEPARATOR_OR:
-                        $queryBuilder->orWhere($queryExpr);
-                        break;
-
-                    case self::SEPARATOR_AND:
-                        $queryBuilder->andWhere($queryExpr);
-                        break;
-
-                    default:
-                        throw new Exception("Unknown separator \"" . $separator . "\" provided");
-                }
-            }
+            $this->where($queryBuilder, $queryExpr);
         }
 
         // Ordering result by group
@@ -1242,6 +1291,64 @@ class ServiceEntityParser implements Subject
         $queryBuilder = $this->groupBy($queryBuilder, $groupBy);
 
         return $queryBuilder;
+    }
+
+    /** Adds a criterion's expression with the call's separator (none for a criterion that adds none). */
+    protected function where(QueryBuilder $queryBuilder, mixed $queryExpr): void
+    {
+        if ($queryExpr === null || $queryExpr === "") {
+            return;
+        }
+
+        $separator = $this->getSeparator();
+        switch ($separator) {
+            case self::SEPARATOR_OR:
+                $queryBuilder->orWhere($queryExpr);
+                break;
+
+            case self::SEPARATOR_AND:
+                $queryBuilder->andWhere($queryExpr);
+                break;
+
+            default:
+                throw new Exception("Unknown separator \"" . $separator . "\" provided");
+        }
+    }
+
+    /**
+     * A group's members, each compiled as a criterion of the call is (buildQueryExpr), with the
+     * group's options under keys of its own ("<group><field>:<index>"), so that neither its options
+     * nor its parameters meet the call's; joined by the group's separator. Null when no member
+     * adds a condition.
+     */
+    protected function groupExpression(QueryBuilder $queryBuilder, string $group, Group $value): mixed
+    {
+        $query = $value->query ?? throw new Exception("The finder group \"" . $value->name . "\" was not read by the parser");
+
+        $options = $this->options;
+        $members = [];
+        try {
+            foreach ($query->arguments[0] ?? [] as $key => $memberValue) {
+                if ($memberValue instanceof Group) {
+                    $members[] = $this->groupExpression($queryBuilder, $group . '_' . $key, $memberValue);
+                    continue;
+                }
+
+                [$name, $index] = explode(self::SEPARATOR, (string) $key, 2) + [1 => '0'];
+                $root = $group . str_replace('.', '_', $name);
+                $this->options = $options + [$root . self::SEPARATOR . $index => $query->options[$key] ?? []];
+                $members[] = $this->buildQueryExpr($queryBuilder, [$name, $root, $index], $memberValue);
+            }
+        } finally {
+            $this->options = $options;
+        }
+
+        $members = array_values(array_filter($members, static fn ($member) => $member !== null && $member !== ""));
+        if (!$members) {
+            return null;
+        }
+
+        return $value->separator() === self::SEPARATOR_OR ? $queryBuilder->expr()->orX(...$members) : $queryBuilder->expr()->andX(...$members);
     }
 
     protected function getEagerQuery(QueryBuilder $queryBuilder, array $options = [], ?ClassMetadata $classMetadata = null): Query

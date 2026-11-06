@@ -48,11 +48,17 @@ class PasskeyRepository extends ServiceEntityRepository implements PasskeyRecord
      */
     public function findOneByCredential(string $publicKeyCredentialId): ?Passkey
     {
-        return $this->createQueryBuilder('passkey')
-            ->where('passkey.publicKeyCredentialId = :id')
-            ->setParameter('id', $publicKeyCredentialId, Base64::NAME)
-            ->getQuery()
-            ->getOneOrNullResult();
+        if (!self::finderReadsGroups()) {
+            // omnisense/omnibase 4.x: its finder binds the raw bytes, the query of before step E2.
+            return $this->createQueryBuilder('passkey')
+                ->where('passkey.publicKeyCredentialId = :id')
+                ->setParameter('id', $publicKeyCredentialId, \Omnibridge\Doctrine\Omnibase\Database\Type\Passkey\Base64::NAME)
+                ->getQuery()
+                ->getOneOrNullResult();
+        }
+
+        // Bound with the column's type (Base64, ConvertedInCriteria): the bytes as the base64 text kept.
+        return $this->findOneBy(['publicKeyCredentialId' => $publicKeyCredentialId]);
     }
 
     /** @return list<CredentialRecord> */

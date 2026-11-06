@@ -7,6 +7,7 @@ use Base\Entity\ThreadIntl;
 
 use Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository;
 use Base\Repository\ThreadTranslations;
+use Base\Database\Repository\Finder\Group;
 
 /**
  * @method ThreadIntl|null find($id, $lockMode = null, $lockVersion = null)
@@ -25,7 +26,33 @@ class ThreadIntlRepository extends ServiceEntityRepository implements ThreadTran
         if (!$terms) {
             return [];
         }
+        if (!self::finderReadsGroups()) {
+            return $this->searchByQueryBuilder($terms, $states, $parent);
+        }
 
+        // (LOWER(title) LIKE %term% OR LOWER(excerpt) LIKE ... ), then the thread's states and parent.
+        $names = $values = [];
+        foreach ($terms as $field => $term) {
+            $names[] = "InsensitivePartial" . ucfirst($field);
+            $values[] = "%" . mb_strtolower(trim($term)) . "%";
+        }
+
+        $criteria = [Group::by(implode("Or", $names), ...$values)];
+        if ($states) {
+            $criteria["translatable.state"] = $states;
+        }
+        if ($parent) {
+            $criteria["translatable.parent"] = $parent;
+        }
+
+        // The translated thread joined, always (TranslatableNotNull), as the inner join of before: its
+        // trash filter keeps the texts of a deleted thread out.
+        return $this->findByTranslatableNotNull($criteria)->getResult();
+    }
+
+    /** search() under omnisense/omnibase 4.x, whose finder has no groups: the query of before step E2. */
+    private function searchByQueryBuilder(array $terms, array $states, Thread|int|string|null $parent): array
+    {
         $queryBuilder = $this->createQueryBuilder("i")->join("i.translatable", "t");
         $expr = [];
         foreach ($terms as $field => $term) {

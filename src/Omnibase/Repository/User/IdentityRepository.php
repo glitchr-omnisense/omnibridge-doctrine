@@ -19,23 +19,12 @@ class IdentityRepository extends ServiceEntityRepository implements Identities
 {
     public function findOneBySubject(string $provider, string $subject): ?Identity
     {
-        return $this->createQueryBuilder('identity')
-            ->where('identity.provider = :provider')
-            ->andWhere('identity.subject = :subject')
-            ->setParameter('provider', $provider)
-            ->setParameter('subject', $subject)
-            ->getQuery()
-            ->getOneOrNullResult();
+        return $this->findOneBy(['provider' => $provider, 'subject' => $subject]);
     }
 
     /** @return list<Identity> the account's identities, by provider */
     public function findOfUser(object $user): array
     {
-        return $this->createQueryBuilder('identity')
-            ->where('identity.user = :user')
-            ->setParameter('user', $user)
-            ->orderBy('identity.provider')
-            ->getQuery()
-            ->getResult();
+        return $this->findBy(['user' => $user], ['provider' => 'ASC']);
     }
 }

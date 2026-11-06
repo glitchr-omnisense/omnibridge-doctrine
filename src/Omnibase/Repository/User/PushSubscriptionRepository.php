@@ -17,8 +17,6 @@ class PushSubscriptionRepository extends ServiceEntityRepository implements Push
     /** Users who enabled push in at least one browser. */
     public function countDistinctUsers(): int
     {
-        return (int) $this->createQueryBuilder('s')
-            ->select('COUNT(DISTINCT s.user)')
-            ->getQuery()->getSingleScalarResult();
+        return (int) $this->distinctCountForUserBy();
     }
 }

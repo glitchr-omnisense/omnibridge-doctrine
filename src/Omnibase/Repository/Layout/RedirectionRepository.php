@@ -6,6 +6,7 @@ use Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository;
 use Omnibridge\Doctrine\Omnibase\Database\Type\UtcDateTimeImmutableType;
 use Base\Entity\Layout\Redirection;
 use Base\Repository\Layout\Redirections;
+use Base\Database\Repository\BackendOnly;
 
 /**
  * @method Redirection|null find($id, $lockMode = null, $lockVersion = null)
@@ -24,10 +25,7 @@ class RedirectionRepository extends ServiceEntityRepository implements Redirecti
         $candidates = array_values(array_unique([$address, $path]));
 
         /** @var Redirection[] $exact */
-        $exact = $this->createQueryBuilder('r')
-            ->andWhere('r.enabled = true')
-            ->andWhere('r.source IN (:sources)')->setParameter('sources', $candidates)
-            ->getQuery()->getResult();
+        $exact = $this->findBy(['enabled' => true, 'source' => $candidates]);
         foreach ($candidates as $candidate) {
             foreach ($exact as $redirection) {
                 if ($redirection->getSource() === $candidate) {
@@ -50,10 +48,7 @@ class RedirectionRepository extends ServiceEntityRepository implements Redirecti
         }
 
         /** @var Redirection[] $prefixes */
-        $prefixes = $this->createQueryBuilder('r')
-            ->andWhere('r.enabled = true')
-            ->andWhere('r.source LIKE :star')->setParameter('star', '%*')
-            ->getQuery()->getResult();
+        $prefixes = $this->findByEnabledTrueAndSourceEndingWith('*')->getResult();
         usort($prefixes, static fn (Redirection $a, Redirection $b) => \strlen($b->getSource()) <=> \strlen($a->getSource()));
         foreach ($prefixes as $redirection) {
             if (null !== $redirection->resolve($address)) {
@@ -65,6 +60,7 @@ class RedirectionRepository extends ServiceEntityRepository implements Redirecti
     }
 
     /** One more visitor carried: counted in the database, whatever else the request holds. */
+    #[BackendOnly('doctrine', 'a bulk DQL UPDATE: hits = hits + 1 in the database, atomic under concurrent requests')]
     public function hit(Redirection $redirection): void
     {
         $this->getEntityManager()->createQuery('UPDATE '.Redirection::class.' r SET r.hits = r.hits + 1, r.lastHitAt = :now WHERE r.id = :id')

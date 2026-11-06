@@ -15,8 +15,8 @@ class TextOverrideRepository extends ServiceEntityRepository
     public function map(): array
     {
         $map = [];
-        foreach ($this->createQueryBuilder('t')->select('t.domain, t.locale, t.key, t.value')->getQuery()->getArrayResult() as $row) {
-            $map[$row['domain'].'|'.$row['locale'].'|'.$row['key']] = $row['value'];
+        foreach ($this->findAll() as $override) {
+            $map[$override->getDomain().'|'.$override->getLocale().'|'.$override->getKey()] = $override->getValue();
         }
 
         return $map;

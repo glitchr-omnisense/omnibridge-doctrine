@@ -103,6 +103,16 @@ class ServiceEntityRepository extends EntityRepository implements Entities
     }
 
     /**
+     * Whether the core's finder language reads groups (Finder\Group) and the aggregates
+     * (sumOf, minOf, maxOf): omnisense/omnibase 5.x, plan "omnibase agnostic", step E2. Under
+     * 4.x, which this bridge serves as well, a method written on them keeps its former query.
+     */
+    protected static function finderReadsGroups(): bool
+    {
+        return class_exists(\Base\Database\Repository\Finder\Group::class);
+    }
+
+    /**
      * @return ClassMetadata|null
      */
     public function getClassMetadata(): ClassMetadata

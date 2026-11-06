@@ -20,14 +20,8 @@ class ComplaintRepository extends ServiceEntityRepository
      */
     public function newest(?string $status = null, ?string $source = null, int $limit = 200): array
     {
-        $query = $this->createQueryBuilder("c")->orderBy("c.createdAt", "DESC")->setMaxResults($limit);
-        if (null !== $status) {
-            $query->andWhere("c.status = :status")->setParameter("status", $status);
-        }
-        if (null !== $source) {
-            $query->andWhere("c.source = :source")->setParameter("source", $source);
-        }
+        $criteria = array_filter(["status" => $status, "source" => $source], static fn ($value) => null !== $value);
 
-        return $query->getQuery()->getResult();
+        return $this->findBy($criteria, ["createdAt" => "DESC"], $limit);
     }
 }

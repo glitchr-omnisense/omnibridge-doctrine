@@ -34,16 +34,10 @@ class TagRepository extends ServiceEntityRepository implements Tags
     {
         if(empty($fields)) $fields[] = "slug";
 
-        $identifier = preg_replace("/%$/", "", $identifier);
-        $qb = $this->createQueryBuilder('u')
-            ->setCacheable($cacheable)
-            ->setCacheRegion($this->getClassMetadata()->cache["region"] ?? null)
-            ->setParameter('identifier', "%".strtolower($identifier)."%");
+        // LOWER(<field>) LIKE %identifier% on any of the fields: a finder of the language, one criterion per field.
+        $identifier = "%".strtolower(preg_replace("/%$/", "", $identifier))."%";
+        $finder = ($cacheable ? "cacheBy" : "findBy") . implode("Or", array_map(static fn (string $field) => "InsensitivePartial".ucfirst($field), $fields));
 
-        foreach($fields as $field) {
-            $qb->orWhere('LOWER(u.'.$field.') LIKE :identifier');
-        }
-
-        return $qb->getQuery();
+        return $this->{$finder}(...array_fill(0, \count($fields), $identifier));
     }
 }

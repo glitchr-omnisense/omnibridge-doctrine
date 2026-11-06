@@ -4,6 +4,7 @@ namespace Omnibridge\Doctrine\Omnibase\Repository\Analytics;
 
 use Base\Entity\Analytics\Visit;
 use Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository;
+use Base\Database\Repository\BackendOnly;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Base\Repository\Analytics\Visits;
 
@@ -22,6 +23,7 @@ class VisitRepository extends ServiceEntityRepository implements Visits
      * $date is bucketed down to the top of its hour here, same reasoning
      * as PageViewRepository::incrementView()'s own bucketing.
      */
+    #[BackendOnly('doctrine', 'native SQL: INSERT IGNORE (INSERT OR IGNORE, ON CONFLICT DO NOTHING)')]
     public function recordPresence(string $subjectType, string $subjectId, \DateTimeImmutable $date): void
     {
         // UTC before bucketing, whatever the process default is: BaseBundle
@@ -61,16 +63,10 @@ class VisitRepository extends ServiceEntityRepository implements Visits
      */
     public function countUnique(string $subjectType, ?\DateTimeImmutable $since = null): int
     {
-        $qb = $this->createQueryBuilder("v")
-            ->select("COUNT(DISTINCT v.subjectId)")
-            ->andWhere("v.subjectType = :type")
-            ->setParameter("type", $subjectType);
-
-        if ($since !== null) {
-            $qb->andWhere("v.date >= :since")->setParameter("since", $since);
-        }
-
-        return (int) $qb->getQuery()->getSingleScalarResult();
+        // COUNT(DISTINCT subjectId) of the type, since the moment given.
+        return (int) (null === $since
+            ? $this->distinctCountForSubjectIdBySubjectType($subjectType)
+            : $this->distinctCountForSubjectIdBySubjectTypeAndDateGreaterEqualTo($subjectType, $since));
     }
 
     /**
@@ -84,6 +80,7 @@ class VisitRepository extends ServiceEntityRepository implements Visits
      *
      * @return array{previous: int, returning: int}
      */
+    #[BackendOnly('doctrine', 'native SQL: COUNT(DISTINCT CASE WHEN EXISTS (correlated subquery))')]
     public function returning(string $subjectType, \DateTimeImmutable $previousSince, \DateTimeImmutable $currentSince): array
     {
         $table = $this->getClassMetadata()->getTableName();
@@ -123,6 +120,7 @@ class VisitRepository extends ServiceEntityRepository implements Visits
      *
      * @return array<string, int> date (Y-m-d) => distinct subject count
      */
+    #[BackendOnly('doctrine', 'native SQL: COUNT(DISTINCT) grouped by DATE()')]
     public function dailyBreakdown(string $subjectType, \DateTimeImmutable $since): array
     {
         $table = $this->getClassMetadata()->getTableName();
@@ -152,6 +150,7 @@ class VisitRepository extends ServiceEntityRepository implements Visits
      *
      * @return array<string, int> hour ("Y-m-d H:i:s") => distinct subject count
      */
+    #[BackendOnly('doctrine', 'native SQL: COUNT(DISTINCT) grouped by the hour bucket')]
     public function hourlyBreakdown(string $subjectType, \DateTimeImmutable $since): array
     {
         $table = $this->getClassMetadata()->getTableName();

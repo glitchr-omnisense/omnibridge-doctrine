@@ -45,9 +45,7 @@ class CommentRepository extends ServiceEntityRepository implements Comments
 
     public function countPending(): int
     {
-        return (int) $this->createQueryBuilder('c')->select('COUNT(c.id)')
-            ->andWhere('c.state = :pending')->setParameter('pending', CommentState::PENDING)
-            ->getQuery()->getSingleScalarResult();
+        return $this->count(['state' => CommentState::PENDING]);
     }
 
     /** @return list<Comment> */
