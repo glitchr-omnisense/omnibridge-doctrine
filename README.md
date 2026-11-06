@@ -70,6 +70,11 @@ classes live here, in `src/Omnibase/`: 142 classes moved by one rule - `Base\Bri
 - the Doctrine listeners (`DatabaseSubscriber\*`, `EntitySubscriber\{Extension, Trasheable,
   Versionable, Setting}Subscriber`) and `DoctrineLocator` (the registry and entity manager for the
   core's host code).
+- the console's Doctrine-typed tasks (omnisense/omnibase's plan "omnibase agnostic", step F5e, slice 3b;
+  `Console\Task\*`, on the core's `Base\Console\Report`, so with omnibase 5.0): `DoctrineDatabaseImport` (a
+  spreadsheet into the database, on the mapping's associations and discriminator maps), `DoctrineSchemaCharset` and
+  `DoctrineArrayUpgrade` (MySQL, on the DBAL connection); omnibridge/symfony's `doctrine:database:import`,
+  `doctrine:schema:charset` and `doctrine:array:upgrade` run them.
 
 This part is loaded only with omnisense/omnibase (in `suggest` here, not `require`). omnibase 4.x
 requires this package; since omnibase 5.0 the application does (the core suggests it), and this package
