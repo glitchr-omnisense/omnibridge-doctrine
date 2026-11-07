@@ -47,6 +47,25 @@ final class DoctrineShapes implements EntityShapes
         return !$metadata->isMappedSuperclass && !$metadata->isEmbeddedClass;
     }
 
+    /**
+     * The mapped entities' classes, those has() counts: every class the entity manager's metadata factory loads but
+     * the mapped superclasses and the embeddables (omnisense/omnibase's plan "omnibase agnostic", step B1d: the back
+     * office's pickable pages listed them from Doctrine's metadata itself).
+     *
+     * @return list<string>
+     */
+    public function classes(): array
+    {
+        $classes = [];
+        foreach ($this->entityManager->getMetadataFactory()->getAllMetadata() as $metadata) {
+            if (!$metadata->isMappedSuperclass && !$metadata->isEmbeddedClass) {
+                $classes[] = $metadata->getName();
+            }
+        }
+
+        return $classes;
+    }
+
     public function shape(string|object $class): EntityShape
     {
         $name = \is_object($class) ? $class::class : $class;
