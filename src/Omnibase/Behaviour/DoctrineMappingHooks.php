@@ -13,6 +13,7 @@ use Base\Database\Type\SetType;
 use Doctrine\DBAL\Types\JsonType;
 use Doctrine\DBAL\Types\StringType;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;
 use Omnibridge\Doctrine\Omnibase\Database\Walker\TranslatableWalker;
 
 /**
@@ -134,7 +135,12 @@ final class DoctrineMappingHooks
             return;
         }
 
+        // Doctrine's manipulator, on the metadata being built: the reader's reads the entities' shapes on omnisense/omnibase
+        // 5.x (step E3), which this class is not yet part of.
         $manipulator = AbstractAttribute::getClassMetadataManipulator();
+        if (!$manipulator instanceof ClassMetadataManipulator) {
+            $manipulator = new ClassMetadataManipulator();
+        }
 
         // For associations/set, orderBy is mandatory and must be JSON or string
         $type = $manipulator->getTypeOfField($classMetadata, $targetValue);

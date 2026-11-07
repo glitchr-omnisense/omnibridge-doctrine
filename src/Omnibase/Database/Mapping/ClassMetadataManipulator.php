@@ -3,7 +3,6 @@
 namespace Omnibridge\Doctrine\Omnibase\Database\Mapping;
 
 use Omnibridge\Doctrine\Omnibase\Behaviour\DoctrineMappingHooks;
-use Base\Cache\Abstract\AbstractLocalCache;
 use Base\Database\Entity\Extension\TranslatableInterface;
 use Omnibridge\Doctrine\Omnibase\DoctrineShapes;
 use Omnibridge\Doctrine\Omnibase\EnumTypeAdapter;
@@ -49,17 +48,26 @@ use Base\Database\Mapping\EntityShape;
 use Base\Database\Mapping\EntityShapes;
 use Base\Database\Mapping\TranslationInterface;
 
-class ClassMetadataManipulator extends AbstractLocalCache
+/**
+ * omnibase's entities' mapping as Doctrine's metadata holds it: the mappings, the entity manager, the forms' guesses.
+ * On omnisense/omnibase 5.x it extends the core's MetadataManipulator (plan "omnibase agnostic", step E3), which answers
+ * the same questions from the entities' shapes, on no ORM, for the attribute reader and the attributes; the completors
+ * (#[Alias]'s names, #[Hierarchify]'s hierarchy) are the core's Completors', read from the classes themselves - they
+ * were written here by the attributes as Doctrine loaded each class, then cached, and a manipulator made again over an
+ * empty cache answered without them. The registry and the entity manager may be left out where only metadata being
+ * built is read (DoctrineMappingHooks).
+ */
+class ClassMetadataManipulator extends MetadataManipulatorBase
 {
     /**
-     * @var ManagerRegistry
+     * @var ManagerRegistry|null
      * */
-    protected ManagerRegistry $doctrine;
+    protected ?ManagerRegistry $doctrine;
 
     /**
-     * @var EntityManagerInterface
+     * @var EntityManagerInterface|null
      * */
-    protected EntityManagerInterface $entityManager;
+    protected ?EntityManagerInterface $entityManager;
 
     /**
      * @var array
@@ -69,7 +77,7 @@ class ClassMetadataManipulator extends AbstractLocalCache
     protected static ?string $cacheDir = null;
     protected static ?string $buildDir = null;
 
-    public function __construct(ManagerRegistry $doctrine, EntityManagerInterface $entityManager, ?string $cacheDir = null, ?string $buildDir = null, array $globalExcludedFields = ['id', 'translatable', 'locale'])
+    public function __construct(?ManagerRegistry $doctrine = null, ?EntityManagerInterface $entityManager = null, ?string $cacheDir = null, ?string $buildDir = null, array $globalExcludedFields = ['id', 'translatable', 'locale'])
     {
         $this->doctrine = $doctrine;
         $this->entityManager = $entityManager;
@@ -78,7 +86,12 @@ class ClassMetadataManipulator extends AbstractLocalCache
         self::$cacheDir ??= $cacheDir;
         self::$buildDir ??= $buildDir ?? self::$cacheDir;
         if ($cacheDir) {
-            parent::__construct(self::$cacheDir, self::$buildDir);
+            // The core's MetadataManipulator (5.x) has a constructor of its own: the local cache's through useCache().
+            if (method_exists($this, 'useCache')) {
+                $this->useCache(self::$cacheDir, self::$buildDir);
+            } else {
+                parent::__construct(self::$cacheDir, self::$buildDir);
+            }
         }
     }
 
@@ -118,7 +131,7 @@ class ClassMetadataManipulator extends AbstractLocalCache
 
     public function getEntityManager(): EntityManagerInterface
     {
-        return $this->entityManager;
+        return $this->entityManager ?? throw new \LogicException('This ClassMetadataManipulator was made without an entity manager: it reads only the metadata it is given.');
     }
 
     /**
@@ -1333,6 +1346,9 @@ class ClassMetadataManipulator extends AbstractLocalCache
     protected function getCompletorFor(object|string $className)
     {
         $className = is_object($className) ? get_class($className) : $className;
+        if (class_exists(\Base\Database\Mapping\Completors::class)) {
+            return \Base\Database\Mapping\Completors::of($className);
+        }
         if (array_key_exists($className, self::$completors) && !isset(self::$completors->payload)) {
             return self::$completors[$className];
         }
@@ -1364,6 +1380,11 @@ class ClassMetadataManipulator extends AbstractLocalCache
 
     public function warmUp(string $cacheDir, ?string $buildDir = null): array
     {
+        // The completors are read from the classes (the core's Completors, step E3): nothing to load.
+        if (class_exists(\Base\Database\Mapping\Completors::class)) {
+            return [];
+        }
+
         self::$completors = $this->getCache("/Completors", function () {
 
             foreach ($this->getAllClassNames() as $className) {
@@ -1388,6 +1409,17 @@ class ClassMetadataManipulator extends AbstractLocalCache
      */
     public function enrichAndSaveCompletors(\Base\Attributes\AttributeReader $attributeReader): void
     {
+        // The completors are read from the classes themselves (the core's Completors, step E3), on no metadata: each
+        // read once here; Doctrine's own mapping hooks run as Doctrine loads each class (AttributeSubscriber), and the
+        // metadata cache keeps what they did.
+        if (class_exists(\Base\Database\Mapping\Completors::class)) {
+            foreach ($this->getAllClassNames() as $className) {
+                \Base\Database\Mapping\Completors::of($className);
+            }
+
+            return;
+        }
+
         self::$completors = [];
 
         foreach ($this->getAllClassNames() as $className) {
@@ -1464,6 +1496,10 @@ class ClassMetadataManipulator extends AbstractLocalCache
 
     public function saveCompletors()
     {
+        if (class_exists(\Base\Database\Mapping\Completors::class)) {
+            return;
+        }
+
         $this->setCache("/Completors", self::$completors, null, true);
     }
 }

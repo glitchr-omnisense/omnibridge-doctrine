@@ -110,7 +110,9 @@ final class MetadataSnapshot
             return null;
         }
 
-        $payload = (fn () => $this->payload)->call($completor);
+        // A value read before it was written is left null by the completor's __get(): it says nothing, and which ones
+        // are there depends on what read the completor before (step E3: the names are read from the shapes now).
+        $payload = array_filter((fn () => $this->payload)->call($completor), static fn ($value) => null !== $value);
         ksort($payload);
 
         return self::normalize($payload);
