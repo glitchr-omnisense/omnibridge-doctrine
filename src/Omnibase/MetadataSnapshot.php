@@ -110,9 +110,13 @@ final class MetadataSnapshot
             return null;
         }
 
-        // A value read before it was written is left null by the completor's __get(): it says nothing, and which ones
-        // are there depends on what read the completor before (step E3: the names are read from the shapes now).
-        $payload = array_filter((fn () => $this->payload)->call($completor), static fn ($value) => null !== $value);
+        // A value read before it was written is left null by the core's completor's __get() (5.x): it says nothing, and
+        // which ones are there depends on what read the completor before (step E3: the names are read from the shapes
+        // now). On 4.x the completor is the one Doctrine's loading wrote, its payload as recorded: kept whole.
+        $payload = (fn () => $this->payload)->call($completor);
+        if (class_exists(\Base\Database\Mapping\Completor::class) && $completor instanceof \Base\Database\Mapping\Completor) {
+            $payload = array_filter($payload, static fn ($value) => null !== $value);
+        }
         ksort($payload);
 
         return self::normalize($payload);
