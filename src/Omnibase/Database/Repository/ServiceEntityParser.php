@@ -48,6 +48,20 @@ class ServiceEntityParser implements Subject
 
     public const ALIAS_ENTITY = 'e';
 
+    /**
+     * The escape character of StartingWith, EndingWith and their Not: their value is a literal prefix or suffix, its "%",
+     * "_" and this character escaped with it (likeLiteral()), and their LIKE says ESCAPE '!' - the same on every
+     * platform, where "_" was escaped as "\_" with no ESCAPE clause: MySQL takes "\" by default, SQLite none, so there
+     * such a criterion matched nothing.
+     */
+    public const LIKE_ESCAPE = '!';
+
+    /** $value as LIKE reads it literally with ESCAPE '!' (LIKE_ESCAPE): its "!", "%" and "_" escaped. */
+    public static function likeLiteral(string $value): string
+    {
+        return strtr($value, [self::LIKE_ESCAPE => self::LIKE_ESCAPE.self::LIKE_ESCAPE, '%' => self::LIKE_ESCAPE.'%', '_' => self::LIKE_ESCAPE.'_']);
+    }
+
     // The words of the finder language, Finder\Parser's (the names kept for the code that reads them here).
     public const REQUEST_FIND = Parser::REQUEST_FIND;
     public const REQUEST_CACHE = Parser::REQUEST_CACHE;
@@ -839,7 +853,7 @@ class ServiceEntityParser implements Subject
 
         } elseif ($regexRequested) {
 
-            $fieldValue = str_replace(["_", "\%"], ["\_", "\%"], $fieldValue);
+            $fieldValue = self::likeLiteral((string) $fieldValue);
 
             if ($tableOperator == self::OPTION_STARTING_WITH) {
                 $fieldValue = $fieldValue . "%";
@@ -1102,17 +1116,10 @@ class ServiceEntityParser implements Subject
 
             } elseif ($regexRequested) {
 
-                if ($tableOperator == self::OPTION_STARTING_WITH) {
-                    $fnExpr = "like";
-                } elseif ($tableOperator == self::OPTION_ENDING_WITH) {
-                    $fnExpr = "like";
-                } elseif ($tableOperator == self::OPTION_NOT_STARTING_WITH) {
-                    $fnExpr = "notLike";
-                } elseif ($tableOperator == self::OPTION_NOT_ENDING_WITH) {
-                    $fnExpr = "notLike";
-                }
+                // DQL's LIKE with its ESCAPE clause, which the query builder's like() and notLike() do not write.
+                $not = in_array($tableOperator, [self::OPTION_NOT_STARTING_WITH, self::OPTION_NOT_ENDING_WITH], true) ? "NOT " : "";
 
-                return $queryBuilder->expr()->$fnExpr($tableColumn, ":$fieldID");
+                return $tableColumn . " " . $not . "LIKE :" . $fieldID . " ESCAPE '" . self::LIKE_ESCAPE . "'";
             } elseif ($closestTo || $farestTo) {
                 return $queryBuilder->expr()->abs($tableColumn . " - :" . $fieldID);
             } elseif ($isNull || $isNotNull) {
