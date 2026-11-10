@@ -6,6 +6,8 @@ releases are made by `.github/workflows/release.yml` from this file: the coming 
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-10
+
 What 1.0 holds, gathered for its first release candidate.
 
 ### Added
