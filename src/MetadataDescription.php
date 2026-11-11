@@ -3,6 +3,7 @@
 namespace Omnibridge\Doctrine;
 
 use Doctrine\DBAL\Schema\Column as SchemaColumn;
+use Doctrine\DBAL\Schema\Exception\InvalidState;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index as SchemaIndex;
 use Doctrine\DBAL\Schema\Table as SchemaTable;
@@ -242,16 +243,35 @@ final class MetadataDescription
 
     private static function foreignKey(ForeignKeyConstraint $foreignKey): ForeignKey
     {
-        $onDelete = $foreignKey->onDelete();
-        $onUpdate = $foreignKey->onUpdate();
-
         return new ForeignKey(
             $foreignKey->getName(),
             $foreignKey->getLocalColumns(),
             $foreignKey->getForeignTableName(),
             $foreignKey->getForeignColumns(),
-            null === $onDelete || 'NO ACTION' === strtoupper($onDelete) ? null : strtoupper($onDelete),
-            null === $onUpdate || 'NO ACTION' === strtoupper($onUpdate) ? null : strtoupper($onUpdate),
+            self::action($foreignKey, 'onDelete'),
+            self::action($foreignKey, 'onUpdate'),
         );
+    }
+
+    /**
+     * The key's ON DELETE or ON UPDATE as ForeignKey::action() writes it for the description built without Doctrine
+     * (in upper case, null for RESTRICT and NO ACTION): from DBAL's ReferentialAction since 4.3 (getOnDeleteAction(),
+     * getOnUpdateAction(); onDelete() and onUpdate() are deprecated since 4.5), from onDelete() and onUpdate() on
+     * 4.2. An action DBAL could not read (it said so with a deprecation) is the option as written, as onDelete() and
+     * onUpdate() answered.
+     *
+     * @param 'onDelete'|'onUpdate' $event
+     */
+    private static function action(ForeignKeyConstraint $foreignKey, string $event): ?string
+    {
+        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2, which composer.json still allows, has no referential actions)
+        if (method_exists($foreignKey, 'getOnDeleteAction')) {
+            try {
+                return ForeignKey::action(('onDelete' === $event ? $foreignKey->getOnDeleteAction() : $foreignKey->getOnUpdateAction())->value);
+            } catch (InvalidState) {
+            }
+        }
+
+        return ForeignKey::action('onDelete' === $event ? $foreignKey->onDelete() : $foreignKey->onUpdate());
     }
 }

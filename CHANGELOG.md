@@ -6,6 +6,16 @@ releases are made by `.github/workflows/release.yml` from this file: the coming 
 
 ## [Unreleased]
 
+### Changed
+
+- `MetadataDescription`: a foreign key's ON DELETE and ON UPDATE are read from DBAL's referential actions
+  (`getOnDeleteAction()`, `getOnUpdateAction()`, DBAL 4.3 and later) instead of `onDelete()` and `onUpdate()`,
+  deprecated since DBAL 4.5, and written by omnisense/omnibridge's `ForeignKey::action()` (upper case, null for
+  RESTRICT and NO ACTION), the normalisation of the description built without Doctrine. DBAL 4.2 is still read through
+  `onDelete()` and `onUpdate()`. `ReferentialActionsTest`: each ON DELETE an entity may declare (none, RESTRICT and NO
+  ACTION in either case, CASCADE, SET NULL) gives the description built without Doctrine, and no deprecation of either
+  method is triggered.
+
 ## [1.0.0] - 2026-11-10
 
 What 1.0 holds, gathered for its first release candidate.
