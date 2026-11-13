@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d71b2904e9d1ee45ac0bee9b86207eef",
+    "content-hash": "39c9d3c3d17484599b1f8373215c783d",
     "packages": [
         {
             "name": "beberlei/doctrineextensions",
@@ -4158,9 +4158,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "omnisense/omnibridge": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

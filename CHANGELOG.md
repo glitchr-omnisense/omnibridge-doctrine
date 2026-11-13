@@ -6,8 +6,13 @@ releases are made by `.github/workflows/release.yml` from this file: the coming 
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-13
+
 ### Changed
 
+- `composer.json` requires `omnisense/omnibridge: ^1.0.1` instead of `1.x-dev`: 1.0.0 did not install in a project
+  of the default (stable) minimum-stability. 1.0.1 is the first omnisense/omnibridge with `ForeignKey::action()`,
+  which `MetadataDescription` calls (below).
 - `MetadataDescription`: a foreign key's ON DELETE and ON UPDATE are read from DBAL's referential actions
   (`getOnDeleteAction()`, `getOnUpdateAction()`, DBAL 4.3 and later) instead of `onDelete()` and `onUpdate()`,
   deprecated since DBAL 4.5, and written by omnisense/omnibridge's `ForeignKey::action()` (upper case, null for

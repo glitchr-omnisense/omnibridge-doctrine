@@ -13,7 +13,7 @@
         "beberlei/doctrineextensions": "^1.0",
         "doctrine/dbal": "^4.2",
         "doctrine/orm": "^3.4",
-        "omnisense/omnibridge": "1.x-dev",
+        "omnisense/omnibridge": "^1.0.1",
         "scienta/doctrine-json-functions": "~4.3",
         "symfony/cache": "^7.0|^8.0"
     },

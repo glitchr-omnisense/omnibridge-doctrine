@@ -10,7 +10,7 @@ order: 10
 | Package | Version |
 |---|---|
 | PHP | 8.2 or later (8.4 for native lazy objects, used when available) |
-| `omnisense/omnibridge` | 1.x-dev (the Schema) |
+| `omnisense/omnibridge` | ^1.0.1 (the Schema; `ForeignKey::action()` since 1.0.1) |
 | `doctrine/orm` | ^3.4 |
 | `doctrine/dbal` | ^4.2 |
 | `symfony/cache` | ^7.0 or ^8.0 (`ArrayAdapter`, the metadata cache by default) |
