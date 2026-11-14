@@ -17,7 +17,7 @@ use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;
  * BaseBundle::boot() seeds and kept on Base\Service\Locator. Each answers null
  * where the host has no such service (a host without Doctrine, Laravel).
  *
- * Base\Bridge\Symfony\FrameworkLocator's Doctrine half, here since step F3;
+ * Omnibridge\Symfony\Omnibase\FrameworkLocator's Doctrine half, here since step F3;
  * FrameworkLocator keeps its methods, which call these, and its Symfony half
  * until F5c.
  */

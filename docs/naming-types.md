@@ -23,7 +23,7 @@ asking a `Omnibridge\Schema\Naming` (default `new CamelCaseNaming()`): `classToT
 
 The rules are the core's ([Naming](https://github.com/glitchr-omnisense/omnibridge/blob/1.x/docs/schema.md#naming)).
 `NamingStrategyTest` checks them against every table and join table of lesringostars
-(`tests/lesringostars-tables.json`). omnisense/omnibase's `Base\Database\Mapping\NamingStrategy`
+(`tests/lesringostars-tables.json`). omnisense/omnibase's `Omnibridge\Doctrine\Omnibase\Database\Mapping\NamingStrategy`
 extends this class.
 
 ```php

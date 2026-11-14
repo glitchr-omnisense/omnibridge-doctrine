@@ -14,7 +14,7 @@ use Doctrine\DBAL\Types\Type;
  *
  * - a SET column (Base\Database\Type\SetType: user roles, user states) is
  *   read with its values, as DBAL reads an ENUM column since 4.2: its type is
- *   Base\Database\Type\MySQLSetType, whose declaration is the SET(...) of the
+ *   Omnibridge\Doctrine\Omnibase\Database\Type\MySQLSetType, whose declaration is the SET(...) of the
  *   values the database has. DBAL reads SET as simple_array (LONGTEXT), a
  *   column every comparison found changed;
  * - the "(DC2Type:...)" a column's comment holds from before is left out,

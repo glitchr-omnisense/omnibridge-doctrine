@@ -31,7 +31,7 @@ use Doctrine\Persistence\Mapping\Driver\MappingDriver as PersistenceMappingDrive
  *   loadClassMetadata) renames them as before.
  *
  * Under Symfony the bundle wraps every entity manager's driver with it
- * (DoctrineConfigurationPass); Base\Bridge\Doctrine\Mapping::register() does
+ * (DoctrineConfigurationPass); Omnibridge\Doctrine\Omnibase\Mapping::register() does
  * it for an entity manager built by hand. Doctrine's own ClassMetadataFactory
  * is then enough: nothing here needs a member Doctrine keeps private.
  */
@@ -127,7 +127,7 @@ final class MappingDriver implements PersistenceMappingDriver
 
     /**
      * The `resolveDiscriminator` event, then the discriminator value of a concrete class found in the map it was
-     * given: what Base\Database\Mapping\ClassMetadataFactory::resolveDiscriminator() did, before the class was read.
+     * given: what Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataFactory::resolveDiscriminator() did, before the class was read.
      */
     private function resolveDiscriminator(ClassMetadata $class): void
     {

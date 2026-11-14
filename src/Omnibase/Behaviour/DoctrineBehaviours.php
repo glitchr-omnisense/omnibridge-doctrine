@@ -25,7 +25,7 @@ use Omnibridge\Persistence\Backend;
  * core's services ask beyond the unit of work's contract (step F2d), registered for
  * DoctrineUnitOfWork (plan "omnibase agnostic", step F2b): AttributeSubscriber, the Doctrine relay that
  * dispatches the neutral lifecycle hooks, registers them when it is made, under
- * Symfony and in Base\Bridge\Doctrine\Mapping alike. Moves to omnibridge/doctrine
+ * Symfony and in Omnibridge\Doctrine\Omnibase\Mapping alike. Moves to omnibridge/doctrine
  * at step F3, with the three implementations.
  */
 final class DoctrineBehaviours

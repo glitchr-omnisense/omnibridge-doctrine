@@ -6,6 +6,23 @@ releases are made by `.github/workflows/release.yml` from this file: the coming 
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-14
+
+For omnisense/omnibase 6.0, which removes the former names of the classes it moved here (the core 6.0 conflicts with
+this package < 2.0). Runs omnisense/omnibase 5.1 as well. The core's UPGRADE-6.0.md lists the former names.
+
+### Changed (breaking)
+- `Omnibase\Database\Mapping\ClassMetadataManipulator` gives a field's `form_type` by the new names
+  (`Omnibridge\Symfony\Omnibase\Field\Type\SelectType`... where 1.x gave `'Base\Field\Type\SelectType'`); the
+  subscribers name `Omnibridge\Symfony\Omnibase\BaseBundle`.
+- `Omnibase\DatabaseSubscriber\DemoAccountLockSubscriber` takes `?Omnibridge\Contract\Requests` only: Symfony's
+  `RequestStack` (deprecated) is no longer adapted - the core 6.0 has no `RequestsOf` any more.
+
+### Changed
+- `Omnibase\MetadataSnapshot` records a repository class by its former name, as it does a filter and a type: the
+  core's entities name their repositories by their new names since 6.0, and a snapshot recorded on 5.x compares equal.
+- composer.json: branch alias `dev-2.x` → `2.x-dev`. Every former name in src/, tests/ and docs/ written with its new name.
+
 ## [1.0.1] - 2026-11-13
 
 ### Changed

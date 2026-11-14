@@ -110,7 +110,7 @@ class TranslatableWalker extends SqlOutputWalker implements OutputWalker
 
     /**
      * The localizer IntlSubscriber was given; none where the subscriber has none (an entity manager built by hand,
-     * Base\Bridge\Doctrine\Mapping) - the walker joins the translations the same way without it.
+     * Omnibridge\Doctrine\Omnibase\Mapping) - the walker joins the translations the same way without it.
      */
     protected function getLocalizer(): ?LocalizerInterface
     {

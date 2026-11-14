@@ -31,7 +31,7 @@ composer require omnibridge/doctrine
   `App\Entity\User\Profile` `userProfile`, `Thread::$tags` the join table
   `thread_tags (thread_id, threadTag_id)`, a property its own name. Checked against every table and
   join table of lesringostars (`tests/lesringostars-tables.json`). omnibase's
-  `Base\Database\Mapping\NamingStrategy` extends it: one place says how a class becomes a table.
+  `Omnibridge\Doctrine\Omnibase\Database\Mapping\NamingStrategy` extends it: one place says how a class becomes a table.
 - `Types::register()`: `datetime` and `datetimetz` written and read in UTC, `utc_datetime` and
   `utc_datetime_immutable`, as omnibase registers them.
 - `EntityManagers::create($connection, $paths)`: an entity manager with both, attribute mapping,
@@ -55,7 +55,7 @@ and 4.5.0), symfony/cache 7 or 8 (the in-memory metadata cache).
 - Under Laravel, omnibridge/laravel builds the site's entity manager with `EntityManagers::create()`
   (`OmnibridgeServiceProvider`).
 - Under Symfony, DoctrineBundle builds the entity manager; omnisense/omnibase gives it its naming
-  strategy (`Base\Database\Mapping\NamingStrategy`, a subclass of this one) and its types.
+  strategy (`Omnibridge\Doctrine\Omnibase\Database\Mapping\NamingStrategy`, a subclass of this one) and its types.
 - Any script: the [Installation](installation.md) page's.
 
 ## glitchr/base-plugin's Doctrine hook (audited 2026-10-17)

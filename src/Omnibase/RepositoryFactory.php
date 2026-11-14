@@ -39,7 +39,7 @@ final class RepositoryFactory implements RepositoryFactoryInterface
 
     /**
      * The registry the repositories are built from; none: one over the entity
-     * manager asking (Base\Bridge\Doctrine\Registry) - the factory is then set
+     * manager asking (Omnibridge\Doctrine\Omnibase\Registry) - the factory is then set
      * on a configuration before its entity manager exists (Mapping::configure()).
      */
     /** @var (\Closure(class-string): ?object)|null the host's services by type */

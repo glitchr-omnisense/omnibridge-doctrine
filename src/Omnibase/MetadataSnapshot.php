@@ -23,13 +23,14 @@ use Doctrine\ORM\Mapping\ClassMetadata;
  * keys, the subclasses by name and the property accessors by property - in a
  * map Doctrine generates, the classes come in the order PHP declared them,
  * which two processes need not share. Two entity managers over the same entities and database - DoctrineBundle's,
- * and one built by hand with Base\Bridge\Doctrine\Mapping - give the same
+ * and one built by hand with Omnibridge\Doctrine\Omnibase\Mapping - give the same
  * snapshot (tests/Bridge/Doctrine/HandBuiltEntityManagerTest).
  *
- * A filter or a type whose class moved here from the core (plan "omnibase agnostic",
- * step F3: TrashFilter, VaultFilter, the passkey and UTC types...) is named by its
- * former name (Base\Database\FormerNames): the snapshot compares the mapping, not
- * where its classes live, and stays that of before the move.
+ * A filter, a type or a repository whose class moved here from the core (plan "omnibase
+ * agnostic", step F3: TrashFilter, VaultFilter, the passkey and UTC types, the repositories
+ * the entities name since omnisense/omnibase 6.0) is named by its former name
+ * (Base\Database\FormerNames): the snapshot compares the mapping, not where its classes
+ * live, and stays that of before the move.
  */
 final class MetadataSnapshot
 {
@@ -71,6 +72,11 @@ final class MetadataSnapshot
         $data = get_object_vars($classMetadata);
         unset($data['reflClass'], $data['reflFields']);
         $data['idGenerator'] = isset($classMetadata->idGenerator) ? $classMetadata->idGenerator::class : null;
+        // The core's entities name their repositories by the moved classes' own names since omnisense/omnibase 6.0
+        // (by their former names, Base\Repository\X, before): the same mapping, the repository by its former name.
+        if (\is_string($data['customRepositoryClassName'] ?? null)) {
+            $data['customRepositoryClassName'] = FormerNames::name($data['customRepositoryClassName']);
+        }
         $data = self::normalize($data);
 
         // In the order PHP declared the classes (the mapping driver lists them so), which two processes need not share;

@@ -18,9 +18,9 @@ use Doctrine\Persistence\Proxy;
  * What it did on a doctrine/orm that glitchr/base-plugin patched - the
  * `resolveDiscriminator` event before a class is read, the table names
  * checked, the discriminator maps keyed by class name through an overridden
- * getShortName() - is Base\Bridge\Doctrine\MappingDriver's, the driver the
+ * getShortName() - is Omnibridge\Doctrine\Omnibase\MappingDriver's, the driver the
  * bundle wraps every entity manager's with, and which an entity manager built
- * by hand gets from Base\Bridge\Doctrine\Mapping::register(), on Doctrine's own
+ * by hand gets from Omnibridge\Doctrine\Omnibase\Mapping::register(), on Doctrine's own
  * factory. Kept here: the naming strategy given back to a ClassMetadata read
  * from the cache, getAllClassNames() and isEntity().
  */
@@ -64,7 +64,7 @@ class ClassMetadataFactory extends DoctrineClassMetadataFactory
      * throws "Typed property … namingStrategy must not be accessed before
      * initialization".
      *
-     * This manifests in this project because Base\Cache\Warmer\MetadataCacheWarmer
+     * This manifests in this project because Omnibridge\Symfony\Omnibase\Cache\Warmer\MetadataCacheWarmer
      * → ClassMetadataManipulator::enrichAndSaveCompletors() iterates entities,
      * resolves their ClassMetadata via $em->getClassMetadata() (a cache-pool-
      * backed call), then invokes attribute->loadClassMetadata() which (in

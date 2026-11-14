@@ -12,7 +12,7 @@ use Omnibridge\Schema\Naming;
  * App\Entity\Thread\Tag is threadTag, App\Entity\User\Profile userProfile,
  * Thread::$tags the join table thread_tags (thread_id, threadTag_id), a
  * property its own name. One place says how a class becomes a table
- * (CamelCaseNaming): omnibase's Base\Database\Mapping\NamingStrategy extends
+ * (CamelCaseNaming): omnibase's Omnibridge\Doctrine\Omnibase\Database\Mapping\NamingStrategy extends
  * this class, and the description built without the ORM (Omnibridge\Schema\
  * Builder) asks the same Naming, so that both find the same tables.
  */

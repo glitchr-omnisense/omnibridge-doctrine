@@ -9,7 +9,7 @@ use Doctrine\DBAL\Driver\Middleware;
  * omnibase's enumerations registered with DBAL when a connection is made, before any metadata is
  * read through it (plan "omnibase agnostic", step F2a): each an EnumTypeAdapter under its name.
  * DoctrineBundle's doctrine.dbal.types took the enumerations' classes, which were Doctrine types
- * until F2a; Base\DependencyInjection\Compiler\Pass\EnumerationTypesPass moves them from there to
+ * until F2a; Omnibridge\Symfony\Omnibase\Legacy\DependencyInjection\Compiler\Pass\EnumerationTypesPass moves them from there to
  * this middleware, so that the core's, an application's and a bundle's (omnibase/marketplace
  * prepends its own) are registered as before, at the same moment.
  */

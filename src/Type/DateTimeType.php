@@ -7,7 +7,7 @@ use Doctrine\DBAL\Types\Exception\InvalidFormat;
 
 /**
  * Doctrine's "datetime" as omnibase overrides it: written in UTC, read as UTC
- * (omnibase's Base\Database\Type\DateTimeTypeUTC).
+ * (omnibase's Omnibridge\Doctrine\Omnibase\Database\Type\DateTimeTypeUTC).
  */
 class DateTimeType extends \Doctrine\DBAL\Types\DateTimeType
 {

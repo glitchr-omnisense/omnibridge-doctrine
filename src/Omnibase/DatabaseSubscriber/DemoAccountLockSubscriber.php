@@ -6,10 +6,8 @@ use Base\Demo\DemoAccountLock;
 use Base\Demo\DemoAccountRegistry;
 use Base\Entity\User;
 use Doctrine\ORM\Event\PreFlushEventArgs;
-use Base\Http\RequestsOf;
 use Omnibridge\Contract\Requests;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -47,16 +45,15 @@ class DemoAccountLockSubscriber
 
     private readonly ?Requests $requests;
 
-    /** @param Requests|RequestStack|null $requests Symfony's RequestStack is deprecated (until 6.0) */
     public function __construct(
         DemoAccountRegistry $accounts,
-        #[Autowire(service: Requests::class)] Requests|RequestStack|null $requests,
+        #[Autowire(service: Requests::class)] ?Requests $requests,
         PasswordHasherFactoryInterface $hashers,
         ?TranslatorInterface $translator = null,
         ?DemoAccountLock $lock = null,
     ) {
         $this->lock = $lock ?? new DemoAccountLock($accounts, $hashers, $translator);
-        $this->requests = RequestsOf::of($requests);
+        $this->requests = $requests;
     }
 
     public function preFlush(PreFlushEventArgs $event): void

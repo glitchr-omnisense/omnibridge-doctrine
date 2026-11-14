@@ -17,7 +17,7 @@ use Doctrine\DBAL\Types\Type;
  * C6): what BaseBundle::boot() and the bundle's doctrine.dbal.types did, in
  * one place, for Symfony and for an entity manager built by hand.
  *
- * - `datetime` and `datetimetz` are Base\Database\Type\DateTimeTypeUTC (the
+ * - `datetime` and `datetimetz` are Omnibridge\Doctrine\Omnibase\Database\Type\DateTimeTypeUTC (the
  *   moment kept in UTC whatever zone PHP was put in), `array` the core's
  *   ArrayType (the serialized arrays of before DBAL 4), `utc_datetime` and
  *   `utc_datetime_immutable` the core's UTC types, `passkey_base64`,

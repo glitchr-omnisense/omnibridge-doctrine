@@ -30,23 +30,23 @@ use Omnibridge\Doctrine\DeclarationDriver;
  * omnibase's Doctrine mapping on an entity manager built by hand - no kernel,
  * no container, no DoctrineBundle (plan "omnibase agnostique", C6):
  *
- *     $entityManager = Omnibridge\Doctrine\EntityManagers::create($connection, $paths, configure: Base\Bridge\Doctrine\Mapping::configure(...));
- *     Base\Bridge\Doctrine\Mapping::register($entityManager, ['project_dir' => ..., 'environment' => 'prod']);
+ *     $entityManager = Omnibridge\Doctrine\EntityManagers::create($connection, $paths, configure: Omnibridge\Doctrine\Omnibase\Mapping::configure(...));
+ *     Omnibridge\Doctrine\Omnibase\Mapping::register($entityManager, ['project_dir' => ..., 'environment' => 'prod']);
  *
  * before the first metadata is read. It does what DoctrineBundle and the
  * bundle do under Symfony:
  *
  * - the class convention (Base\Service\Model\ClassAliases: App\Entity\X is
  *   Base\Entity\X where the application has none);
- * - the column types (Base\Bridge\Doctrine\Types): the core's, the
+ * - the column types (Omnibridge\Doctrine\Omnibase\Types): the core's, the
  *   enumerations of the core and of the project (src/Enum), those given;
  * - the configuration: omnibase's naming strategy, the filters and the DQL
- *   functions (Base\Bridge\Doctrine\Configuration), the mapping driver wrapped
+ *   functions (Omnibridge\Doctrine\Omnibase\Configuration), the mapping driver wrapped
  *   twice (omnibridge/doctrine's DeclarationDriver: the metadata built from the
  *   classes' declarations, Omnibridge\Schema\Declaration, no longer from the
- *   attributes read by Doctrine - audit R14; then Base\Bridge\Doctrine\MappingDriver:
+ *   attributes read by Doctrine - audit R14; then Omnibridge\Doctrine\Omnibase\MappingDriver:
  *   the discriminator maps, the `resolveDiscriminator` event);
- * - the repositories built from a registry (Base\Bridge\Doctrine\Registry,
+ * - the repositories built from a registry (Omnibridge\Doctrine\Omnibase\Registry,
  *   RepositoryFactory): configure() sets the factory on the configuration
  *   before the entity manager exists (omnibridge/doctrine's `configure:`), and
  *   the entity manager's own getRepository() hands them out;
@@ -198,7 +198,7 @@ final class Mapping
 
     /**
      * The repository of an entity as the bundle would hand it out: omnibase's ServiceEntityRepository and the
-     * applications' over it are built from the ManagerRegistry (Base\Bridge\Doctrine\Registry).
+     * applications' over it are built from the ManagerRegistry (Omnibridge\Doctrine\Omnibase\Registry).
      *
      * @deprecated since step C6's follow-up: build the entity manager with configure() (omnibridge/doctrine's
      *             `configure:`) and ask its own getRepository() - the same repository. Kept for an entity manager

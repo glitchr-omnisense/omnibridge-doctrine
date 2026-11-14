@@ -9,7 +9,7 @@ use Doctrine\DBAL\Types\Type;
 /**
  * A SET column as the database has it, its values in the column's `values`
  * option, as DBAL's own EnumType is to an ENUM column: what
- * Base\Bridge\Doctrine\MySQLSchemaManager reads a SET column as, so that it
+ * Omnibridge\Doctrine\Omnibase\MySQLSchemaManager reads a SET column as, so that it
  * compares with the declaration of the Base\Database\Type\SetType it maps
  * (SET('A', 'B'), the same values, the same order) and differs from it once
  * the enumeration's values change. A mapping names its SetType, never this.

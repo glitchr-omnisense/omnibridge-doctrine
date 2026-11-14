@@ -18,8 +18,8 @@ class PlatformMiddleware implements Middleware
             {
                 // The platform as DBAL makes it. ENUM and SET were mapped to string and json here, which
                 // only glitchr/doctrine-dc2type's "(DC2Type:...)" comments overrode: DBAL reads an ENUM as
-                // its EnumType with the column's values since 4.2, and Base\Bridge\Doctrine\MySQLSchemaManager
-                // a SET as Base\Database\Type\MySQLSetType (plan "omnibase agnostique", C6b).
+                // its EnumType with the column's values since 4.2, and Omnibridge\Doctrine\Omnibase\MySQLSchemaManager
+                // a SET as Omnibridge\Doctrine\Omnibase\Database\Type\MySQLSetType (plan "omnibase agnostique", C6b).
                 return parent::getDatabasePlatform($connection);
             }
 

@@ -10,7 +10,7 @@ use Doctrine\DBAL\Schema\SchemaManagerFactory as SchemaManagerFactoryInterface;
 
 /**
  * The schema managers of an omnibase connection (plan "omnibase agnostique",
- * C6b): on MySQL and MariaDB, Base\Bridge\Doctrine\MySQLSchemaManager, which
+ * C6b): on MySQL and MariaDB, Omnibridge\Doctrine\Omnibase\MySQLSchemaManager, which
  * reads a SET column with its values and leaves out the "(DC2Type:...)"
  * comments of before; on any other platform, the one the factory it wraps
  * gives (DBAL's DefaultSchemaManagerFactory unless another is given).

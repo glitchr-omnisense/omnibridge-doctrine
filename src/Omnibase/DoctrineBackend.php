@@ -10,7 +10,7 @@ use Omnibridge\Persistence\UnitOfWork;
 /**
  * omnisense/omnibridge's Backend on Doctrine (plan "omnibase agnostic", step F2e): its unit of work, what
  * it can do, and the core's scopes as its SQL filters - "trash" is the filter "trash_filter"
- * (Base\Database\Filter\TrashFilter, which compiles Base\Database\Scope\TrashScope), "vault" is
+ * (Omnibridge\Doctrine\Omnibase\Database\Filter\TrashFilter, which compiles Base\Database\Scope\TrashScope), "vault" is
  * "vault_filter" (VaultFilter, VaultScope, enabled with the environment). Registered for DoctrineUnitOfWork
  * in Backends, and the Symfony service Omnibridge\Persistence\Backend. Moves to omnibridge/doctrine at F3.
  */

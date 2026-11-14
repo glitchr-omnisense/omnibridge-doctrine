@@ -12,7 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * (audit "lesringostars face au master plan", step R28): its repositories as
  * they are when they are omnibase's (Entities already), a plain
  * EntityRepository behind DoctrineEntities otherwise. byIds() and oneById()
- * ask what Base\Field\Type\SelectType asked before: the same queries.
+ * ask what Omnibridge\Symfony\Omnibase\Field\Type\SelectType asked before: the same queries.
  */
 final class DoctrineRepositories implements Repositories
 {

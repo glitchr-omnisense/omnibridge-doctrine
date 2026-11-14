@@ -6,7 +6,7 @@ use Omnibridge\Doctrine\Omnibase\Behaviour\DoctrineMappingHooks;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Base\Attributes\AbstractAttribute;
 use Base\Attributes\AttributeReader;
-use Base\BaseBundle;
+use Omnibridge\Symfony\Omnibase\BaseBundle;
 use Omnibridge\Doctrine\Omnibase\Database\Event\DoctrineQueryEventArgs;
 use Omnibridge\Doctrine\Omnibase\Database\Event\ResolveDiscriminatorEventArgs;
 use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;

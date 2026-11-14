@@ -2,7 +2,7 @@
 
 namespace Omnibridge\Doctrine\Omnibase\DatabaseSubscriber;
 
-use Base\BaseBundle;
+use Omnibridge\Symfony\Omnibase\BaseBundle;
 use Base\Database\Entity\Extension\TranslatableInterface;
 use Base\Database\Entity\Extension\TranslationInterface;
 use Omnibridge\Doctrine\Omnibase\Database\Event\DoctrineQueryEventArgs;
