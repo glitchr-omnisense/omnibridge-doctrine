@@ -62,6 +62,7 @@ final class DoctrineResult implements Result
         return DatabaseErrors::reading(fn (): array => ($this->pages ??= new QueryPages($this->query))->slice($offset, $limit));
     }
 
+    /** @return \ArrayIterator<int, mixed> */
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->getResult());
@@ -73,6 +74,7 @@ final class DoctrineResult implements Result
         return $this->query->getDQL();
     }
 
+    /** @return string|list<string> */
     public function getSQL(): string|array
     {
         return $this->query->getSQL();

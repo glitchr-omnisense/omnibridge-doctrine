@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.1
+
+Fixes found once omnisense/omnibase's PHPStan analyses this package's src/Base and src/Omnibase (no signature changes):
+- `VersionableSubscriber` asks `obsoleteIds()` of the revisions' repository only when it is the core's
+  `RevisionRepository` (a repository without it is left alone instead of failing in the finder language).
+- `LifecycleRelay` and the repositories' backend check that they are given Doctrine ORM's entity manager and unit of
+  work, with a clear error otherwise.
+- `MetadataSnapshot` iterates DBAL 4's type registry directly (no `getMap()` there); `ClassMetadataCompletor::__set()`
+  returns nothing, as a magic setter does.
+- Types: the finders' parameters and bindings already lists, the generic events, metadata and repositories in
+  PHPDoc, `DoctrineFinder::find()` given a class name it checked.
+
 ## 3.0.0
 
 omnibridge/doctrine: omnibase's persistence on Doctrine ORM 3 and DBAL 4, framework-free - Doctrine reading the

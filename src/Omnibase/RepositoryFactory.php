@@ -18,10 +18,19 @@ final class RepositoryFactory implements RepositoryFactoryInterface
     /** @var array<string, EntityRepository<object>> */
     private array $repositories = [];
 
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $entityName
+     *
+     * @return EntityRepository<T>
+     */
     public function getRepository(EntityManagerInterface $entityManager, string $entityName): EntityRepository
     {
         $metadata = $entityManager->getClassMetadata($entityName);
+        /** @var EntityRepository<T> $repository the one of that class (each class its own) */
+        $repository = $this->repositories[$metadata->getName().spl_object_id($entityManager)] ??= new EntityRepository($entityManager, $metadata);
 
-        return $this->repositories[$metadata->getName().spl_object_id($entityManager)] ??= new EntityRepository($entityManager, $metadata);
+        return $repository;
     }
 }

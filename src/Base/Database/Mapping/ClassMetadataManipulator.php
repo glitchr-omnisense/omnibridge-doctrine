@@ -1054,6 +1054,7 @@ class ClassMetadataManipulator extends MetadataManipulatorBase
         return $this->getFieldNames($entityOrClassOrMetadata)[$fieldName] ?? null;
     }
 
+    /** @return array<string, string>|null the field names, by column, alias or association name */
     public function getFieldNames(null|object|string $entityOrClassOrMetadata): ?array
     {
         $classMetadata = $this->getClassMetadata($entityOrClassOrMetadata);

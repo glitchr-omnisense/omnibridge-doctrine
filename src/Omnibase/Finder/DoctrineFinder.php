@@ -39,7 +39,10 @@ final class DoctrineFinder implements Finder
 
     public function find(mixed $id): ?object
     {
-        return DatabaseErrors::reading(fn (): ?object => $this->entityManager->find($this->className(), $id));
+        $class = $this->className();
+        \assert(class_exists($class));
+
+        return DatabaseErrors::reading(fn (): ?object => $this->entityManager->find($class, $id));
     }
 
     public function clear(): void

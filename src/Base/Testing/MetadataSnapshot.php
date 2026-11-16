@@ -53,11 +53,10 @@ final class MetadataSnapshot
         }
 
         $types = [];
-        // DBAL 4 has no getMap(): the registry iterated there (the built-in types, those resolved and those registered).
-        $registry = Type::getTypeRegistry();
-        foreach (method_exists($registry, 'getMap') ? $registry->getMap() : iterator_to_array($registry) as $name => $type) {
+        // DBAL 4's registry, iterated (the built-in types, those resolved and those registered).
+        foreach (iterator_to_array(Type::getTypeRegistry()) as $name => $type) {
             // An enumeration by its own class (an EnumTypeAdapter of it since step F2a, the class itself before).
-            $types[$name] = $type instanceof EnumTypeAdapter ? $type->enumeration() : (\is_object($type) ? $type::class : (string) $type);
+            $types[$name] = $type instanceof EnumTypeAdapter ? $type->enumeration() : $type::class;
         }
         ksort($types);
 

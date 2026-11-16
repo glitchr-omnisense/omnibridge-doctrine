@@ -59,7 +59,10 @@ final class DoctrineBehaviours
         // The repositories over the unit of work's entity manager: the host's registry where it has one for that entity
         // manager (its container's: the application's repositories as its services, their own dependencies given), else
         // the core's registry on Doctrine's finders.
-        Backends::register(DoctrineUnitOfWork::class, Repositories::class, static function (DoctrineUnitOfWork $unitOfWork): Repositories {
+        Backends::register(DoctrineUnitOfWork::class, Repositories::class, static function (\Omnibridge\Persistence\UnitOfWork $unitOfWork): Repositories {
+            if (!$unitOfWork instanceof DoctrineUnitOfWork) {
+                throw new \LogicException(sprintf('Doctrine\'s repositories are built on a %s, not on a %s.', DoctrineUnitOfWork::class, $unitOfWork::class));
+            }
             $host = null !== self::$host ? (self::$host)($unitOfWork->entityManager()) : null;
 
             return $host instanceof Repositories ? $host : new EntityRepositories(DoctrineFinders::over($unitOfWork->entityManager()));

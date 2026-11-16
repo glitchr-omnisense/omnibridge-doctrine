@@ -48,13 +48,11 @@ if (class_exists(\Base\Database\Mapping\Completor::class)) {
         /**
          * @param string $name
          * @param mixed $value
-         * @return $this
          */
         public function __set(string $name, mixed $value)
         {
             $this->payload["class"] ??= $this->className; // Useful when looking inside cache directory for debugging.....
             $this->payload[$name] = $value;
-            return $this;
         }
 }
 }

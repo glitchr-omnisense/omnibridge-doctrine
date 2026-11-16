@@ -48,11 +48,13 @@ final class LifecycleRelay
         return $relay;
     }
 
+    /** @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function prePersist(LifecycleEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\PrePersist($event->getObject(), $this->unitOfWork($event)));
     }
 
+    /** @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function preUpdate(LifecycleEventArgs $event): void
     {
         $unitOfWork = $this->unitOfWork($event);
@@ -68,49 +70,61 @@ final class LifecycleRelay
         }
     }
 
+    /** @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function preRemove(LifecycleEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\PreRemove($event->getObject(), $this->unitOfWork($event)));
     }
 
+    /** @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function postPersist(LifecycleEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\PostPersist($event->getObject(), $this->unitOfWork($event)));
     }
 
+    /** @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function postUpdate(LifecycleEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\PostUpdate($event->getObject(), $this->unitOfWork($event)));
     }
 
+    /** @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function postRemove(LifecycleEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\PostRemove($event->getObject(), $this->unitOfWork($event)));
     }
 
+    /** @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function postLoad(LifecycleEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\PostLoad($event->getObject(), $this->unitOfWork($event)));
     }
 
+    /** @param ManagerEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function preFlush(ManagerEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\PreFlush($this->unitOfWork($event)));
     }
 
+    /** @param ManagerEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function onFlush(ManagerEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\OnFlush($this->unitOfWork($event)));
     }
 
+    /** @param ManagerEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     public function postFlush(ManagerEventArgs $event): void
     {
         ($this->listeners)(new Lifecycle\PostFlush($this->unitOfWork($event)));
     }
 
+    /** @param LifecycleEventArgs<\Doctrine\Persistence\ObjectManager>|ManagerEventArgs<\Doctrine\Persistence\ObjectManager> $event */
     private function unitOfWork(LifecycleEventArgs|ManagerEventArgs $event): DoctrineUnitOfWork
     {
         $entityManager = $event->getObjectManager();
+        if (!$entityManager instanceof \Doctrine\ORM\EntityManagerInterface) {
+            throw new \LogicException(sprintf('The lifecycle is relayed from Doctrine ORM\'s entity managers, not from a %s.', $entityManager::class));
+        }
 
         return $this->unitsOfWork[spl_object_id($entityManager)] ??= new DoctrineUnitOfWork($entityManager);
     }

@@ -159,8 +159,11 @@ class VersionableSubscriber
             $trimmed[$key] = true;
 
             // omnibase's repository of the revisions (Doctrine's own getRepository() is its plain one).
-            $obsolete = \Base\Database\UnitOfWorks::repositories(\Base\Database\UnitOfWorks::of($entityManager))->of(Revision::class)
-                ->obsoleteIds($revision->getEntityClass(), $revision->getEntityId(), $this->maxRevisions);
+            $revisions = \Base\Database\UnitOfWorks::repositories(\Base\Database\UnitOfWorks::of($entityManager))->of(Revision::class);
+            if (!$revisions instanceof \Base\Repository\Extension\RevisionRepository) {
+                continue; // a repository of the revisions without the core's obsoleteIds()
+            }
+            $obsolete = $revisions->obsoleteIds($revision->getEntityClass(), $revision->getEntityId(), $this->maxRevisions);
 
             if (empty($obsolete)) {
                 continue;

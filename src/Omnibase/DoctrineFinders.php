@@ -120,7 +120,7 @@ final class DoctrineFinders implements Finders
         $types = [];
         $pieces = preg_split('/\{selection:(\d+)\}/', $sql, -1, \PREG_SPLIT_DELIM_CAPTURE) ?: [$sql];
         $written = '';
-        $given = array_values($parameters);
+        $given = $parameters;
         foreach ($pieces as $index => $piece) {
             if (1 === $index % 2) {
                 [$class, $criteria] = $selections[(int) $piece] ?? throw new \LogicException(sprintf('No selection %s for %s.', $piece, $sql));
@@ -173,6 +173,6 @@ final class DoctrineFinders implements Finders
         \assert(\is_string($sql));
         [$values, $types] = (\Closure::bind(fn (): array => $this->processParameterMappings($this->parse()->getParameterMappings()), $query, \Doctrine\ORM\Query::class))();
 
-        return [$sql, array_values($values), array_values($types)];
+        return [$sql, $values, array_values($types)];
     }
 }

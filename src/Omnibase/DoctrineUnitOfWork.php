@@ -149,7 +149,7 @@ final class DoctrineUnitOfWork implements UnitOfWork, Snapshots, Schedule
         foreach ($this->entityManager->getUnitOfWork()->getScheduledCollectionUpdates() as $collection) {
             $updates[] = [
                 'entity' => $collection->getOwner(),
-                'field' => (string) ($collection->getMapping()->fieldName ?? ''),
+                'field' => $collection->getMapping()->fieldName,
                 'added' => array_values($collection->getInsertDiff()),
                 'removed' => array_values($collection->getDeleteDiff()),
             ];

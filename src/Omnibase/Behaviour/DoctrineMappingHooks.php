@@ -111,6 +111,8 @@ final class DoctrineMappingHooks
     /**
      * #[Cascade] / #[OrphanRemoval]: every association of the class given the cascade and orphan removal the core reads
      * (Cascade::resolve(), what Eloquent's cascades take too).
+     *
+     * @param ClassMetadata<object> $classMetadata
      */
     public static function cascades(AttributeInterface $attribute, ClassMetadata $classMetadata, string $target, ?string $targetValue = null): void
     {
@@ -129,6 +131,8 @@ final class DoctrineMappingHooks
     /**
      * #[DiscriminatorEntry] on a root entity: its map's keys, each class under the value the core gives it
      * (DiscriminatorRule::value(), the same as the description's), and the root's own value.
+     *
+     * @param ClassMetadata<object> $classMetadata
      */
     public static function discriminatorEntry(DiscriminatorEntry $entry, ClassMetadata $classMetadata, string $target, ?string $targetValue = null): void
     {

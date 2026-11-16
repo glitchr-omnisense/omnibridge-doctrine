@@ -156,7 +156,7 @@ class DqlCompiler implements Subject
     protected ?ClassMetadataManipulator $classMetadataManipulator = null;
 
     /**
-     * @var EntityRepository Doctrine's plain repository of the class: the query builder's root
+     * @var EntityRepository<object> Doctrine's plain repository of the class: the query builder's root
      */
     protected EntityRepository $serviceEntity;
 
@@ -170,6 +170,7 @@ class DqlCompiler implements Subject
      */
     protected EntityManagerInterface $entityManager;
 
+    /** @param EntityRepository<object> $serviceEntity */
     public function __construct(EntityRepository $serviceEntity, EntityManagerInterface $entityManager, ClassMetadataManipulator $classMetadataManipulator, EntityHydrator $entityHydrator)
     {
         $this->serviceEntity = $serviceEntity;
@@ -472,6 +473,8 @@ class DqlCompiler implements Subject
      * a DQL query of the identifier alone, what the core's common SQL embeds as a selection (Finders::sql()).
      *
      * @internal
+     *
+     * @param array<mixed> $criteria
      */
     public function identifiers(array $criteria): Query
     {
