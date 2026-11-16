@@ -2,10 +2,10 @@
 
 namespace Omnibridge\Doctrine\Omnibase\Database\Walker;
 
-use Omnibridge\Doctrine\Omnibase\Database\Mapping\NamingStrategy;
+use Base\Database\Mapping\NamingStrategy;
 use Base\Database\Entity\Extension\TranslatableInterface;
 use Base\Database\Entity\Extension\TranslationInterface;
-use Omnibridge\Doctrine\Omnibase\DatabaseSubscriber\IntlSubscriber;
+use Base\DatabaseSubscriber\IntlSubscriber;
 use Base\Service\LocalizerInterface;
 use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\OutputWalker;
@@ -120,7 +120,7 @@ class TranslatableWalker extends SqlOutputWalker implements OutputWalker
             }
         }
 
-        throw new RuntimeException('Locale provider not found.');
+        return null;
     }
 
     /**

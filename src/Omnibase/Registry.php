@@ -9,7 +9,7 @@ use Doctrine\Persistence\Proxy;
 /**
  * doctrine/persistence's ManagerRegistry over one entity manager and its
  * connection, both named "default": what omnibase's repositories
- * (Omnibridge\Doctrine\Omnibase\Database\Repository\ServiceEntityRepository) and the
+ * (Base\Database\Repository\ServiceEntityRepository) and the
  * ClassMetadataManipulator are built from, where DoctrineBundle's `doctrine`
  * service is not there (Omnibridge\Doctrine\Omnibase\Mapping).
  */

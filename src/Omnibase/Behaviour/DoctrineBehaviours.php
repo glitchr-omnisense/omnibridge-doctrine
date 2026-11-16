@@ -10,7 +10,8 @@ use Base\Database\Attribute\Backend\OrderColumnBackend;
 use Base\Database\Attribute\Backend\SlugifyBackend;
 use Base\Database\Attribute\Backend\VaultBackend;
 use Base\Database\Mapping\EntityShapes;
-use Omnibridge\Doctrine\Omnibase\DoctrineRepositories;
+use Base\Database\Repository\EntityRepositories;
+use Omnibridge\Doctrine\Omnibase\DoctrineFinders;
 use Omnibridge\Doctrine\Omnibase\DoctrineBackend;
 use Base\Database\Backend\BulkDeletes;
 use Base\Database\Backend\ColumnTypes;
@@ -55,8 +56,33 @@ final class DoctrineBehaviours
         foreach (self::BACKENDS as $behaviour => $backend) {
             Backends::register(DoctrineUnitOfWork::class, $behaviour, $backend);
         }
-        // The repositories over the unit of work's entity manager (step F2d): DoctrineRepositories takes the entity manager alone.
-        Backends::register(DoctrineUnitOfWork::class, Repositories::class, static fn (DoctrineUnitOfWork $unitOfWork) => new DoctrineRepositories($unitOfWork->entityManager()));
+        // The repositories over the unit of work's entity manager: the host's registry where it has one for that entity
+        // manager (its container's: the application's repositories as its services, their own dependencies given), else
+        // the core's registry on Doctrine's finders.
+        Backends::register(DoctrineUnitOfWork::class, Repositories::class, static function (DoctrineUnitOfWork $unitOfWork): Repositories {
+            $host = null !== self::$host ? (self::$host)($unitOfWork->entityManager()) : null;
+
+            return $host instanceof Repositories ? $host : new EntityRepositories(DoctrineFinders::over($unitOfWork->entityManager()));
+        });
+    }
+
+    /** @var (\Closure(\Doctrine\ORM\EntityManagerInterface): ?Repositories)|null */
+    private static ?\Closure $host = null;
+
+    /**
+     * The host's registry of repositories for an entity manager of its own (null for another one): what
+     * UnitOfWorks::repositories() answers on that entity manager's unit of work - a fixtures command's, a lifecycle
+     * listener's - so that a repository taking a service of the application's (a cache pool) is that service.
+     *
+     * @internal the hosts' (omnibridge/symfony's BaseBundle, omnibridge/laravel's provider)
+     *
+     * @param (\Closure(\Doctrine\ORM\EntityManagerInterface): ?Repositories)|null $repositories
+     */
+    public static function host(?\Closure $repositories): void
+    {
+        self::$host = $repositories;
+        // The registries already made on the former answer are forgotten (Backends keeps one per unit of work).
+        self::register();
     }
 
     /** Registers them unless done: a DoctrineUnitOfWork made before the relay (a service's, at the top of a request) finds them. */

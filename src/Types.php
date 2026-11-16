@@ -9,8 +9,8 @@ use Omnibridge\Doctrine\Type\UtcDateTimeType;
 
 /**
  * The DBAL types of omnibase's schema, registered as omnibase registers them
- * (BaseBundle::boot(), BaseExtension::prependDoctrineTypes()): datetime and
- * datetimetz written and read in UTC, utc_datetime and utc_datetime_immutable.
+ * (BaseBundle::boot(), BaseExtension::prependDoctrineTypes()): datetime,
+ * datetimetz and their immutable twins written and read in UTC, utc_datetime and utc_datetime_immutable.
  * Before any metadata is read: a field's type is asked while it is.
  */
 final class Types
@@ -19,6 +19,8 @@ final class Types
     {
         Type::overrideType('datetime', DateTimeType::class);
         Type::overrideType('datetimetz', DateTimeType::class);
+        Type::overrideType('datetime_immutable', UtcDateTimeImmutableType::class);
+        Type::overrideType('datetimetz_immutable', UtcDateTimeImmutableType::class);
         foreach ([UtcDateTimeType::NAME => UtcDateTimeType::class, UtcDateTimeImmutableType::NAME => UtcDateTimeImmutableType::class] as $name => $class) {
             if (!Type::hasType($name)) {
                 Type::addType($name, $class);

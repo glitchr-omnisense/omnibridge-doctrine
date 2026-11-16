@@ -2,20 +2,24 @@
 
 namespace Omnibridge\Doctrine\Omnibase;
 
+use Base\Database\Repository\Entities;
+use Base\Database\Repository\EntityRepositories;
+use Base\Database\Repository\Finders;
+use Base\Database\Repository\Repositories;
 use Base\Service\Storages;
 use Base\Attributes\AttributeReader;
 use Base\Database\Entity\EntityExtension;
 use Base\Database\Entity\EntityHydrator;
-use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;
-use Omnibridge\Doctrine\Omnibase\Database\Mapping\NamingStrategy;
+use Base\Database\Mapping\ClassMetadataManipulator;
+use Base\Database\Mapping\NamingStrategy;
 use Base\Database\Events as BaseEvents;
-use Omnibridge\Doctrine\Omnibase\DatabaseSubscriber\AttributeSubscriber;
-use Omnibridge\Doctrine\Omnibase\DatabaseSubscriber\InverseCollectionCacheSubscriber;
-use Omnibridge\Doctrine\Omnibase\DatabaseSubscriber\IntlSubscriber;
-use Omnibridge\Doctrine\Omnibase\DatabaseSubscriber\TrackingPolicySubscriber;
-use Omnibridge\Doctrine\Omnibase\EntitySubscriber\ExtensionSubscriber;
-use Omnibridge\Doctrine\Omnibase\EntitySubscriber\TrasheableSubscriber;
-use Omnibridge\Doctrine\Omnibase\EntitySubscriber\VersionableSubscriber;
+use Base\DatabaseSubscriber\AttributeSubscriber;
+use Base\DatabaseSubscriber\InverseCollectionCacheSubscriber;
+use Base\DatabaseSubscriber\IntlSubscriber;
+use Base\DatabaseSubscriber\TrackingPolicySubscriber;
+use Base\EntitySubscriber\ExtensionSubscriber;
+use Base\EntitySubscriber\TrasheableSubscriber;
+use Base\EntitySubscriber\VersionableSubscriber;
 use Base\Service\ArrayParameterBag;
 use Base\Service\LocalizerInterface;
 use Base\Service\Model\ClassAliases;
@@ -46,10 +50,9 @@ use Omnibridge\Doctrine\DeclarationDriver;
  *   classes' declarations, Omnibridge\Schema\Declaration, no longer from the
  *   attributes read by Doctrine - audit R14; then Omnibridge\Doctrine\Omnibase\MappingDriver:
  *   the discriminator maps, the `resolveDiscriminator` event);
- * - the repositories built from a registry (Omnibridge\Doctrine\Omnibase\Registry,
- *   RepositoryFactory): configure() sets the factory on the configuration
- *   before the entity manager exists (omnibridge/doctrine's `configure:`), and
- *   the entity manager's own getRepository() hands them out;
+ * - omnibase's repositories (the core's EntityRepositories over DoctrineFinders:
+ *   $repositories, $finders); configure() sets the factory that keeps Doctrine's
+ *   own getRepository() on its plain repository;
  * - the services the mapping reads through: the ClassMetadataManipulator
  *   (the completors: aliases, hierarchies), the AttributeReader (#[Alias],
  *   #[DiscriminatorEntry], #[Hierarchify], #[Cache], #[OrderColumn]...) with
@@ -74,7 +77,7 @@ use Omnibridge\Doctrine\DeclarationDriver;
  * flysystem (omnibase's Base\Service\Storages over the host's storages, none by default: the
  * attributes that read a stored file - #[Uploader]'s public address of an upload, an article's audio -
  * read it through the reader's; without it they cannot answer), services (a closure giving the host's service of a
- * type, or null: what a repository takes beside the registry, a site's cache pool - RepositoryFactory::services()),
+ * type, or null: what a repository takes beside the Finders, a site's cache pool),
  * filters (true: enabled).
  */
 final class Mapping
@@ -85,7 +88,8 @@ final class Mapping
         public readonly ClassMetadataManipulator $classMetadataManipulator,
         public readonly AttributeReader $attributeReader,
         public readonly ArrayParameterBag $parameters,
-        public readonly RepositoryFactory $repositories,
+        public readonly Repositories $repositories,
+        public readonly Finders $finders,
     ) {
     }
 
@@ -116,17 +120,16 @@ final class Mapping
         Configuration::apply($configuration);
         // Doctrine reads the structure described outside of it (omnibridge/doctrine's DeclarationDriver over the
         // application's driver, audit R14), and around it what omnibase's factory did (MappingDriver).
-        $configuration->setMetadataDriverImpl(new MappingDriver(new DeclarationDriver($configuration->getMetadataDriverImpl()), $entityManager));
-
-        // The repository factory configure() set, and its registry; else a factory of our own, which only
-        // getRepository() (deprecated) reaches: the entity manager keeps the one it was built with.
-        $factory = $configuration->getRepositoryFactory();
-        $repositories = $factory instanceof RepositoryFactory ? $factory : null;
-        $registry = $repositories?->registryFor($entityManager) ?? new Registry($entityManager);
-        $repositories ??= new RepositoryFactory($registry);
-        if (($services = $options['services'] ?? null) instanceof \Closure) {
-            $repositories->services($services);
+        $driver = $configuration->getMetadataDriverImpl();
+        if (!$driver instanceof MappingDriver) {
+            $configuration->setMetadataDriverImpl(new MappingDriver($driver instanceof DeclarationDriver ? $driver : new DeclarationDriver($driver), $entityManager));
         }
+
+        // omnibase's repositories on this entity manager: the core's registry over Doctrine's finders, a repository's
+        // own services asked from the host (the option `services`).
+        $registry = new Registry($entityManager);
+        $finders = new DoctrineFinders($registry);
+        $repositories = new EntityRepositories($finders, ($services = $options['services'] ?? null) instanceof \Closure ? new ServiceLocator($services) : null);
 
         $manipulator = new ClassMetadataManipulator($registry, $entityManager, $cacheDir);
         $hydrator = new EntityHydrator(new DoctrineUnitOfWork($entityManager), $manipulator->getShapes());
@@ -180,16 +183,14 @@ final class Mapping
             Configuration::enableFilters($entityManager, $environment);
         }
 
-        return new self($entityManager, $registry, $manipulator, $reader, $parameters, $repositories);
+        return new self($entityManager, $registry, $manipulator, $reader, $parameters, $repositories, $finders);
     }
 
     /**
-     * What an entity manager built by hand needs set before it exists: the
-     * repository factory (Doctrine keeps the one its configuration had at
-     * `new EntityManager`). Given to omnibridge/doctrine's EntityManagers::create()
-     * as its `configure:` closure; then the entity manager's getRepository()
-     * builds omnibase's ServiceEntityRepository and the applications' over it
-     * from the registry, as the bundle would.
+     * What an entity manager built by hand needs set before it exists: the repository factory (Doctrine keeps the
+     * one its configuration had at `new EntityManager`), so that Doctrine's own getRepository() hands out its plain
+     * repository and never tries to build one of omnibase's. Given to omnibridge/doctrine's EntityManagers::create()
+     * as its `configure:` closure.
      */
     public static function configure(\Doctrine\ORM\Configuration $configuration): void
     {
@@ -197,15 +198,12 @@ final class Mapping
     }
 
     /**
-     * The repository of an entity as the bundle would hand it out: omnibase's ServiceEntityRepository and the
-     * applications' over it are built from the ManagerRegistry (Omnibridge\Doctrine\Omnibase\Registry).
+     * The repository of an entity: omnibase's (Base\Repository\*, App\Repository\*), or the plain one of the class.
      *
-     * @deprecated since step C6's follow-up: build the entity manager with configure() (omnibridge/doctrine's
-     *             `configure:`) and ask its own getRepository() - the same repository. Kept for an entity manager
-     *             built without it, whose own factory is Doctrine's default.
+     * @return Entities<object>
      */
-    public function getRepository(string $className): EntityRepository
+    public function getRepository(string $className): Entities
     {
-        return $this->repositories->getRepository($this->entityManager, $className);
+        return $this->repositories->of($className);
     }
 }

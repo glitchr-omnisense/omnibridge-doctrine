@@ -5,11 +5,11 @@ namespace Omnibridge\Doctrine\Tests;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The package's two parts (omnisense/omnibase's plan "omnibase agnostic", step F3):
- * the generic one (src/ outside src/Omnibase), which any framework reads and which
- * names nothing of omnibase, and omnibase's (src/Omnibase, Omnibridge\Doctrine\Omnibase\),
- * moved from the core and loaded only with it - each of its files declares the class its
- * path names, in the namespace its directory names.
+ * The package's three parts: the generic one (src/ outside src/Omnibase and src/Base), which any framework reads
+ * and which names nothing of omnibase; omnibase's persistence (src/Omnibase, Omnibridge\Doctrine\Omnibase\), loaded
+ * only with the core; and the Doctrine classes a host's configuration names, declared under their Base\ names
+ * (src/Base: Base\Database\Mapping, Base\Database\Type, Base\DatabaseSubscriber, Base\EntitySubscriber) - each file of
+ * the last two declares the class its path names, in the namespace its directory names.
  */
 final class OmnibasePartTest extends TestCase
 {
@@ -17,7 +17,7 @@ final class OmnibasePartTest extends TestCase
     {
         $named = [];
         foreach (self::files(\dirname(__DIR__).'/src') as $relative => $code) {
-            if (str_starts_with($relative, 'Omnibase/')) {
+            if (str_starts_with($relative, 'Omnibase/') || str_starts_with($relative, 'Base/')) {
                 continue;
             }
             // Code only: a docblock may say which omnibase class extends one of these.
@@ -32,14 +32,17 @@ final class OmnibasePartTest extends TestCase
 
     public function testEachFileOfOmnibasesPartDeclaresTheClassItsPathNames(): void
     {
-        $files = self::files(\dirname(__DIR__).'/src/Omnibase');
+        $files = [];
+        foreach (['Omnibase' => 'Omnibridge\\Doctrine\\Omnibase\\', 'Base' => 'Base\\'] as $folder => $namespace) {
+            foreach (self::files(\dirname(__DIR__).'/src/'.$folder) as $relative => $code) {
+                $files[$folder.'/'.$relative] = [$namespace.str_replace('/', '\\', substr($relative, 0, -4)), $code];
+            }
+        }
         self::assertNotEmpty($files);
 
         $wrong = [];
-        foreach ($files as $relative => $code) {
-            $expected = 'Omnibridge\\Doctrine\\Omnibase\\'.str_replace('/', '\\', substr($relative, 0, -4));
+        foreach ($files as $relative => [$expected, $code]) {
             preg_match('/^namespace ([^;]+);/m', $code, $namespace);
-            // Indented where the declaration is conditional (Repository\User\CoreComplaints: the core's interface where it has one).
             preg_match('/^[ ]*(?:(?:abstract|final|readonly) )*(?:class|interface|trait|enum) (\w+)/m', $code, $class);
             $declared = ($namespace[1] ?? '').'\\'.($class[1] ?? '');
             if ($declared !== $expected) {

@@ -7,7 +7,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
-use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;
+use Base\Database\Mapping\ClassMetadataManipulator;
 
 /**
  * Doctrine's services as omnibase's host code reached them through BaseTrait
@@ -57,11 +57,13 @@ final class DoctrineLocator
         return $entityManager;
     }
 
-    public static function repository(object|string $entity): ?ObjectRepository
+    /** omnibase's repository of the class (the language), on the entity manager of the class. */
+    public static function repository(object|string $entity): ?object
     {
         $class = is_object($entity) ? get_class($entity) : $entity;
+        $entityManager = self::objectManager($class);
 
-        return self::objectManager($class)?->getRepository($class);
+        return null === $entityManager ? null : \Base\Database\UnitOfWorks::repositories(\Base\Database\UnitOfWorks::of($entityManager))->of($class);
     }
 
     public static function classMetadataManipulator(): ?ClassMetadataManipulator

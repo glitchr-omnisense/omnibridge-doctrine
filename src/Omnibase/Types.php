@@ -2,13 +2,13 @@
 
 namespace Omnibridge\Doctrine\Omnibase;
 
-use Omnibridge\Doctrine\Omnibase\Database\Type\ArrayType;
-use Omnibridge\Doctrine\Omnibase\Database\Type\DateTimeTypeUTC;
+use Base\Database\Type\ArrayType;
+use Base\Database\Type\DateTimeTypeUTC;
 use Base\Database\Type\EnumType;
 use Base\Database\Type\Enumerations;
 use Base\Database\Type\Passkey;
-use Omnibridge\Doctrine\Omnibase\Database\Type\UtcDateTimeImmutableType;
-use Omnibridge\Doctrine\Omnibase\Database\Type\UtcDateTimeType;
+use Base\Database\Type\UtcDateTimeImmutableType;
+use Base\Database\Type\UtcDateTimeType;
 use Base\Service\Model\ClassFinder;
 use Doctrine\DBAL\Types\Type;
 
@@ -17,8 +17,9 @@ use Doctrine\DBAL\Types\Type;
  * C6): what BaseBundle::boot() and the bundle's doctrine.dbal.types did, in
  * one place, for Symfony and for an entity manager built by hand.
  *
- * - `datetime` and `datetimetz` are Omnibridge\Doctrine\Omnibase\Database\Type\DateTimeTypeUTC (the
- *   moment kept in UTC whatever zone PHP was put in), `array` the core's
+ * - `datetime` and `datetimetz` are Base\Database\Type\DateTimeTypeUTC (the
+ *   moment kept in UTC whatever zone PHP was put in), `datetime_immutable` and
+ *   `datetimetz_immutable` UtcDateTimeImmutableType (the same, immutable), `array` the core's
  *   ArrayType (the serialized arrays of before DBAL 4), `utc_datetime` and
  *   `utc_datetime_immutable` the core's UTC types, `passkey_base64`,
  *   `passkey_aaguid` and `passkey_trust_path` the columns of
@@ -40,6 +41,9 @@ final class Types
         return [
             'datetime' => DateTimeTypeUTC::class,
             'datetimetz' => DateTimeTypeUTC::class,
+            // One time, UTC: the immutable moments too (Doctrine's own write the wall clock the object carries).
+            'datetime_immutable' => UtcDateTimeImmutableType::class,
+            'datetimetz_immutable' => UtcDateTimeImmutableType::class,
             'array' => ArrayType::class,
             UtcDateTimeImmutableType::NAME => UtcDateTimeImmutableType::class,
             UtcDateTimeType::NAME => UtcDateTimeType::class,
@@ -50,9 +54,9 @@ final class Types
     public static function passkey(): array
     {
         return [
-            \Omnibridge\Doctrine\Omnibase\Database\Type\Passkey\Base64::NAME => \Omnibridge\Doctrine\Omnibase\Database\Type\Passkey\Base64::class,
-            \Omnibridge\Doctrine\Omnibase\Database\Type\Passkey\Aaguid::NAME => \Omnibridge\Doctrine\Omnibase\Database\Type\Passkey\Aaguid::class,
-            \Omnibridge\Doctrine\Omnibase\Database\Type\Passkey\TrustPath::NAME => \Omnibridge\Doctrine\Omnibase\Database\Type\Passkey\TrustPath::class,
+            \Base\Database\Type\Passkey\Base64::NAME => \Base\Database\Type\Passkey\Base64::class,
+            \Base\Database\Type\Passkey\Aaguid::NAME => \Base\Database\Type\Passkey\Aaguid::class,
+            \Base\Database\Type\Passkey\TrustPath::NAME => \Base\Database\Type\Passkey\TrustPath::class,
         ];
     }
 
@@ -60,8 +64,13 @@ final class Types
     public static function enumerations(array $directories): array
     {
         $types = [];
+        // App\Enum\X is the application's own where it declares one (extending Base\Enum\X with its cases), the core's otherwise.
+        \Base\Service\Model\ClassAliases::register();
         foreach ($directories as $directory) {
             foreach (ClassFinder::classes($directory) as $className) {
+                if (str_starts_with($className, 'Base\\Enum\\')) {
+                    $className = (new \ReflectionClass('App\\'.substr($className, \strlen('Base\\'))))->getName();
+                }
                 // A plain PHP enum (Base\Enum\Allergen, CommentState) is no Doctrine type.
                 if (!class_exists($className) || !is_subclass_of($className, EnumType::class) || (new \ReflectionClass($className))->isAbstract()) {
                     continue;

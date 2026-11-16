@@ -68,4 +68,17 @@ final class EntityManagersTest extends TestCase
         self::assertInstanceOf(\Omnibridge\Doctrine\NamingStrategy::class, $seen, 'after omnibase\'s own settings');
         self::assertSame($factory, $entityManager->getConfiguration()->getRepositoryFactory());
     }
+
+    public function testAnEntityWrittenInOmnibasesVocabularyIsMapped(): void
+    {
+        if (!class_exists(\Base\Mapping\Entity::class)) {
+            self::markTestSkipped('omnisense/omnibase is not installed.');
+        }
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $entityManager = EntityManagers::create($connection, [__DIR__.'/Fixtures/Vocabulary']);
+
+        self::assertInstanceOf(\Omnibridge\Doctrine\DeclarationDriver::class, $entityManager->getConfiguration()->getMetadataDriverImpl());
+        self::assertFalse($entityManager->getMetadataFactory()->isTransient(Fixtures\Vocabulary\Badge::class));
+        self::assertSame(['id', 'label'], $entityManager->getClassMetadata(Fixtures\Vocabulary\Badge::class)->getFieldNames());
+    }
 }

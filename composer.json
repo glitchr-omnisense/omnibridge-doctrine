@@ -1,6 +1,6 @@
 {
     "name": "omnibridge/doctrine",
-    "description": "The storage glue of omnibase sites, framework-free: Doctrine reading the structure described outside of it (omnisense/omnibridge's Omnibridge\\Schema), the naming strategy that turns their entities into their tables, the UTC date types, and an entity manager built with them, for any framework reading the same database; and omnibase's persistence on Doctrine (Omnibridge\\Doctrine\\Omnibase\\: its repositories, finder compiler, mapping, DBAL types, walkers, filters and listeners), which omnisense/omnibase requires.",
+    "description": "omnibase's persistence on Doctrine, and the storage glue of omnibase sites, framework-free: Doctrine reading the structure described outside of it (omnisense/omnibridge's schema), the naming strategy, the UTC date types, an entity manager built with them; behind the core's contracts, the compiler of the finder language, the statements of the backend-only queries and the mapping. It declares no repository: the core's repositories are the same on every persistence. The Doctrine classes a host's configuration names are declared under the core's own namespace.",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -13,19 +13,23 @@
         "beberlei/doctrineextensions": "^1.0",
         "doctrine/dbal": "^4.2",
         "doctrine/orm": "^3.4",
-        "omnisense/omnibridge": "^1.0.1",
+        "omnisense/omnibridge": "^1.0",
         "scienta/doctrine-json-functions": "~4.3",
         "symfony/cache": "^7.0|^8.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^11.5"
+        "omnisense/omnibase": "^1.0",
+        "doctrine/orm-plugin-second-level-cache": "^1.0",
+        "phpunit/phpunit": "^11.5",
+        "symfony/validator": "^7.0|^8.0"
     },
     "suggest": {
-        "omnisense/omnibase": "Omnibridge\\Doctrine\\Omnibase\\: omnibase's persistence on Doctrine, moved from the core (its former Base\\ names aliased by the core); loaded only with the core, which requires this package"
+        "omnisense/omnibase": "The core this package is the Doctrine persistence of (^1.0)"
     },
     "autoload": {
         "psr-4": {
-            "Omnibridge\\Doctrine\\": "src/"
+            "Omnibridge\\Doctrine\\": "src/",
+            "Base\\": "src/Base/"
         }
     },
     "autoload-dev": {
@@ -34,9 +38,9 @@
             "App\\Entity\\": "tests/Fixtures/Entity/"
         }
     },
-    "extra": {
-        "branch-alias": {
-            "dev-2.x": "2.x-dev"
+    "config": {
+        "allow-plugins": {
+            "omnibridge/composer": true
         }
     }
 }

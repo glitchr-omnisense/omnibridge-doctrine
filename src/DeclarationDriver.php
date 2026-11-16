@@ -8,7 +8,9 @@ use Doctrine\ORM\Mapping\Builder\EntityListenerBuilder;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\MappingException;
 use Doctrine\Persistence\Mapping\ClassMetadata as PersistenceClassMetadata;
+use Doctrine\Persistence\Mapping\Driver\ColocatedMappingDriver;
 use Doctrine\Persistence\Mapping\Driver\MappingDriver;
+use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Omnibridge\Schema\Declaration\Attribute;
 use Omnibridge\Schema\Declaration\AttributeReader;
 use Omnibridge\Schema\Declaration\ClassDeclaration;
@@ -28,12 +30,23 @@ use Omnibridge\Schema\Declaration\Vocabulary;
  * attributes instantiated from their arguments as written - so the metadata
  * are those it would build, to the property (the proof: omnisense/omnibase's
  * MetadataSnapshot, every class of lesringostars, on both hosts). Which
- * classes exist, and whether one is transient, stays the driver's it wraps
- * (an AttributeDriver's folders, DoctrineBundle's chain); a class its
- * declarations do not hold (an XML mapping) is left to that driver.
+ * folders hold the classes stays the driver's it wraps (an AttributeDriver's
+ * paths, DoctrineBundle's chain of them); a class its declarations do not hold
+ * (an XML mapping) is left to that driver.
+ *
+ * Whether a class is an entity is the declaration's too: an entity written in
+ * omnibase's own vocabulary (#[Base\Mapping\Entity], step E3) carries no
+ * attribute Doctrine's AttributeDriver knows, which would call it transient
+ * and leave it out of its classes. So a class declared an entity or a mapped
+ * superclass is no transient one, and the classes of an attribute driver's
+ * folders are listed as it lists them (each file included, the classes PHP
+ * declared from them, in that order), kept by that answer.
  */
 final class DeclarationDriver implements MappingDriver
 {
+    /** @var list<class-string>|null */
+    private ?array $classNames = null;
+
     public function __construct(
         private readonly MappingDriver $driver,
         private readonly Declarations $declarations = new AttributeReader(),
@@ -52,12 +65,109 @@ final class DeclarationDriver implements MappingDriver
 
     public function getAllClassNames(): array
     {
-        return $this->driver->getAllClassNames();
+        return $this->classNames ??= $this->classNamesOf($this->driver);
     }
 
+    /** Doctrine's answer (an entity or a mapped superclass is not transient), on the class's declaration. */
     public function isTransient(string $className): bool
     {
+        $kind = class_exists($className) ? $this->declarations->read($className)?->kind() : null;
+        if ('Entity' === $kind || 'MappedSuperclass' === $kind) {
+            return false;
+        }
+
         return $this->driver->isTransient($className);
+    }
+
+    /**
+     * The classes a driver maps, as it lists them, but whether one is transient answered by isTransient(): a
+     * chain's by namespace (MappingDriverChain::getAllClassNames()), an attribute driver's from its folders
+     * (ColocatedMappingDriver::getAllClassNames()), any other driver's its own.
+     *
+     * @return list<class-string>
+     */
+    private function classNamesOf(MappingDriver $driver): array
+    {
+        if ($driver instanceof MappingDriverChain) {
+            $classNames = [];
+            $listed = [];
+            foreach ($driver->getDrivers() as $namespace => $inner) {
+                $listed[spl_object_id($inner)] ??= $this->classNamesOf($inner);
+                foreach ($listed[spl_object_id($inner)] as $className) {
+                    if (str_starts_with($className, $namespace)) {
+                        $classNames[$className] = true;
+                    }
+                }
+            }
+            if (null !== $driver->getDefaultDriver()) {
+                foreach ($this->classNamesOf($driver->getDefaultDriver()) as $className) {
+                    $classNames[$className] = true;
+                }
+            }
+
+            return array_keys($classNames);
+        }
+
+        if (!\in_array(ColocatedMappingDriver::class, class_uses($driver), true)) {
+            return $driver->getAllClassNames();
+        }
+
+        // Its own listing first: it includes the files of its folders (or asks its class locator).
+        $classNames = $driver->getAllClassNames();
+        $located = (function (): array {
+            $locator = property_exists($this, 'classLocator') ? $this->classLocator : null;
+
+            return $locator?->getClassNames() ?? [];
+        })->call($driver);
+
+        return array_values(array_filter(
+            array_unique([...self::declaredIn($driver->getPaths(), $driver->getExcludePaths(), $driver->getFileExtension()), ...$located, ...$classNames]),
+            fn (string $className): bool => !$this->isTransient($className),
+        ));
+    }
+
+    /**
+     * The classes PHP declared from the files of the folders (FileClassLocator::getClassNames()), in the order it
+     * declared them; each file included first.
+     *
+     * @param list<string> $paths
+     * @param list<string> $excludePaths
+     *
+     * @return list<class-string>
+     */
+    private static function declaredIn(array $paths, array $excludePaths, string $extension): array
+    {
+        $excluded = array_map(static fn (string $path): string => str_replace('\\', '/', realpath($path) ?: $path), $excludePaths);
+        $files = [];
+        foreach ($paths as $path) {
+            if (!is_dir($path)) {
+                continue;
+            }
+            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::LEAVES_ONLY);
+            foreach ($iterator as $file) {
+                if (!$file->isFile() || !str_ends_with($file->getFilename(), $extension)) {
+                    continue;
+                }
+                $fileName = $file->getRealPath() ?: $file->getPathname();
+                foreach ($excluded as $excludedPath) {
+                    if (str_starts_with(str_replace('\\', '/', $fileName), $excludedPath)) {
+                        continue 2;
+                    }
+                }
+                $files[$fileName] = true;
+                require_once $fileName;
+            }
+        }
+
+        $classes = [];
+        foreach (get_declared_classes() as $className) {
+            $fileName = (new \ReflectionClass($className))->getFileName();
+            if (false !== $fileName && isset($files[$fileName])) {
+                $classes[] = $className;
+            }
+        }
+
+        return $classes;
     }
 
     /** What else the wrapped driver answers (MappingDriverChain::getDrivers()...). */

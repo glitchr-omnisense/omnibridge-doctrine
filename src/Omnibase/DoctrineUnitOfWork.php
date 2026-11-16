@@ -5,6 +5,7 @@ namespace Omnibridge\Doctrine\Omnibase;
 use Omnibridge\Doctrine\Omnibase\Behaviour\DoctrineBehaviours;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\UnitOfWork as DoctrineUnitOfWorkState;
+use Omnibridge\Persistence\Schedule;
 use Omnibridge\Persistence\Snapshots;
 use Omnibridge\Persistence\UnitOfWork;
 
@@ -13,7 +14,7 @@ use Omnibridge\Persistence\UnitOfWork;
  * F2): what the core's code asks where it spoke to the entity manager, and what the lifecycle events
  * the Doctrine relay dispatches carry. Moves to omnibridge/doctrine at step F3.
  */
-final class DoctrineUnitOfWork implements UnitOfWork, Snapshots
+final class DoctrineUnitOfWork implements UnitOfWork, Snapshots, Schedule
 {
     public function __construct(private readonly EntityManagerInterface $entityManager)
     {
@@ -38,7 +39,17 @@ final class DoctrineUnitOfWork implements UnitOfWork, Snapshots
 
     public function flush(): void
     {
-        $this->entityManager->flush();
+        DatabaseErrors::writing(fn () => $this->entityManager->flush());
+    }
+
+    public function clear(): void
+    {
+        $this->entityManager->clear();
+    }
+
+    public function isOpen(): bool
+    {
+        return $this->entityManager->isOpen();
     }
 
     public function refresh(object $entity): void
@@ -115,5 +126,35 @@ final class DoctrineUnitOfWork implements UnitOfWork, Snapshots
         }
 
         $unitOfWork->recomputeSingleEntityChangeSet($metadata, $entity);
+    }
+
+    public function scheduledInsertions(): array
+    {
+        return array_values($this->entityManager->getUnitOfWork()->getScheduledEntityInsertions());
+    }
+
+    public function scheduledUpdates(): array
+    {
+        return array_values($this->entityManager->getUnitOfWork()->getScheduledEntityUpdates());
+    }
+
+    public function scheduledDeletions(): array
+    {
+        return array_values($this->entityManager->getUnitOfWork()->getScheduledEntityDeletions());
+    }
+
+    public function scheduledCollectionUpdates(): array
+    {
+        $updates = [];
+        foreach ($this->entityManager->getUnitOfWork()->getScheduledCollectionUpdates() as $collection) {
+            $updates[] = [
+                'entity' => $collection->getOwner(),
+                'field' => (string) ($collection->getMapping()->fieldName ?? ''),
+                'added' => array_values($collection->getInsertDiff()),
+                'removed' => array_values($collection->getDeleteDiff()),
+            ];
+        }
+
+        return $updates;
     }
 }

@@ -11,7 +11,8 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 /**
  * An entity manager over an omnibase site's database, for a framework that
- * has none of its own: attribute mapping of the given folders, omnibase's
+ * has none of its own: attribute mapping of the given folders (in Doctrine's
+ * or omnibase's vocabulary, through the DeclarationDriver), omnibase's
  * naming strategy and types, PHP's native lazy objects for proxies.
  *
  * Without a cache, the metadata is kept in memory for the request (an
@@ -37,6 +38,12 @@ final class EntityManagers
         }
         if (null !== $configure) {
             $configure($configuration);
+        }
+        // The structure read from the declarations (DeclarationDriver): an entity written in omnibase's vocabulary
+        // (#[Base\Mapping\Entity]) is one, which Doctrine's attribute driver alone would call transient.
+        $driver = $configuration->getMetadataDriverImpl();
+        if (null !== $driver && !$driver instanceof DeclarationDriver && !$driver instanceof Omnibase\MappingDriver) {
+            $configuration->setMetadataDriverImpl(new DeclarationDriver($driver));
         }
 
         return new EntityManager($connection, $configuration);

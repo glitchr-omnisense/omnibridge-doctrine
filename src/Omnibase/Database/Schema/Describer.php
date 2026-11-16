@@ -2,27 +2,16 @@
 
 namespace Omnibridge\Doctrine\Omnibase\Database\Schema;
 
+use Base\Database\Schema\EntitySchema;
 use Omnibridge\Doctrine\Omnibase\Types;
 use Base\Database\Type\EnumType;
 use Base\Database\Type\SetType;
-use Base\Service\Model\ClassAliases;
-use Base\Service\Model\ClassFinder;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Types\Type;
-use Omnibridge\Schema\Builder;
 use Omnibridge\Schema\Builder\Rule;
-use Omnibridge\Schema\CamelCaseNaming;
 use Omnibridge\Schema\Column;
 use Omnibridge\Schema\Database\MySqlSchema;
-use Omnibridge\Schema\Declaration\AttributeReader;
-use Omnibridge\Schema\Declaration\Declarations;
 use Omnibridge\Schema\Description;
-use Base\Database\Schema\DiscriminatorRule;
-use Base\Database\Schema\ExtensionRule;
-use Base\Database\Schema\OrderColumnRule;
-use Base\Database\Schema\TargetRule;
-use Base\Database\Schema\TranslationRule;
-use Base\Database\Schema\VaultRule;
 
 /**
  * The description of an omnibase application's data (Omnibridge\Schema\
@@ -53,21 +42,12 @@ final class Describer
      */
     public static function describe(array $directories, array $options = []): Description
     {
-        // App\Entity\X is Base\Entity\X where the application has none of its own: associations name them.
-        ClassAliases::register();
-
-        $classes = [];
-        foreach ($directories as $directory) {
-            $classes = array_merge($classes, ClassFinder::classes($directory));
-        }
-
-        $declarations = $options['declarations'] ?? new AttributeReader();
-
-        return (new Builder($declarations instanceof Declarations ? $declarations : new AttributeReader(), new CamelCaseNaming(), self::rules($options)))->build($classes);
+        // One description of omnibase's entities: the core's (its rules are omnibase's, not this bridge's).
+        return EntitySchema::describe($directories, $options);
     }
 
     /**
-     * omnibase's rules, in the order Doctrine's listeners run.
+     * omnibase's rules, in the order Doctrine's listeners run: the core's EntitySchema::rules().
      *
      * @param array<string, mixed> $options
      *
@@ -75,15 +55,7 @@ final class Describer
      */
     public static function rules(array $options = []): array
     {
-        return [
-            new DiscriminatorRule(),
-            new VaultRule(),
-            new OrderColumnRule(self::types($options)),
-            new TranslationRule(),
-            new TargetRule($options['resolve_target_entities'] ?? []),
-            new ExtensionRule(),
-            ...($options['rules'] ?? []),
-        ];
+        return EntitySchema::rules($options);
     }
 
     /**

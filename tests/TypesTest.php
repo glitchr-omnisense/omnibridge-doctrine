@@ -8,6 +8,8 @@ use Doctrine\DBAL\Types\Exception\InvalidFormat;
 use Omnibridge\Doctrine\Type\DateTimeType;
 use Omnibridge\Doctrine\Type\UtcDateTimeImmutableType;
 use Omnibridge\Doctrine\Type\UtcDateTimeType;
+use Omnibridge\Doctrine\Types;
+use Doctrine\DBAL\Types\Type;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -25,6 +27,20 @@ final class TypesTest extends TestCase
         self::assertSame('2026-10-18 07:30:00', $type->convertToDatabaseValue(new \DateTime('2026-10-18 09:30:00', new \DateTimeZone('Europe/Paris')), $platform));
         $read = $type->convertToPHPValue('2026-10-18 07:30:00', $platform);
         self::assertSame('2026-10-18T07:30:00+00:00', $read->format(\DATE_ATOM));
+    }
+
+    /** One time: every date and time type registered writes and reads UTC, the immutable ones too. */
+    public function testEveryDateTimeTypeRegisteredIsUtc(): void
+    {
+        Types::register();
+        $platform = new MySQLPlatform();
+        $paris = new \DateTimeImmutable('2026-10-18 09:30:00', new \DateTimeZone('Europe/Paris'));
+        foreach (['datetime', 'datetimetz', 'datetime_immutable', 'datetimetz_immutable', 'utc_datetime', 'utc_datetime_immutable'] as $name) {
+            $type = Type::getType($name);
+            $value = str_contains($name, 'immutable') ? $paris : \DateTime::createFromImmutable($paris);
+            self::assertSame('2026-10-18 07:30:00', $type->convertToDatabaseValue($value, $platform), $name);
+            self::assertSame('2026-10-18T07:30:00+00:00', $type->convertToPHPValue('2026-10-18 07:30:00', $platform)->format(\DATE_ATOM), $name);
+        }
     }
 
     public function testAnUnreadableValueIsAConversionExceptionAsInDbal4(): void

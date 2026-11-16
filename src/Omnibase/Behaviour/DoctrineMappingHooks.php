@@ -5,21 +5,29 @@ namespace Omnibridge\Doctrine\Omnibase\Behaviour;
 use Base\Attributes\AbstractAttribute;
 use Base\Attributes\AttributeInterface;
 use Base\Database\Attribute\Cache;
+use Base\Database\Attribute\Cascade;
+use Base\Database\Attribute\OrphanRemoval;
+use Base\Database\Attribute\DiscriminatorEntry;
 use Base\Database\Attribute\OrderColumn;
 use Base\Database\Attribute\Vault;
 use Base\Database\Entity\EntityExtension;
 use Base\Database\Entity\Extension\TranslationInterface;
+use Base\Database\Schema\DiscriminatorRule;
 use Base\Database\Type\SetType;
+use Base\Database\Type\Enumerations;
+use Base\Database\Mapping\EntityFields;
+use Base\Mapping\OrderBy;
 use Doctrine\DBAL\Types\JsonType;
 use Doctrine\DBAL\Types\StringType;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataManipulator;
+use Base\Database\Mapping\ClassMetadataManipulator;
 use Omnibridge\Doctrine\Omnibase\Database\Walker\TranslatableWalker;
 
 /**
  * The behaviours' mapping on Doctrine, read when Doctrine loads a class's metadata
  * (plan "omnibase agnostic", step F3): #[Cache]'s second-level cache regions,
- * #[Vault]'s unique constraints, #[OrderColumn]'s order field. They were the
+ * #[Vault]'s unique constraints, #[OrderColumn]'s order field, #[DiscriminatorEntry]'s values (the core's
+ * DiscriminatorRule::value(), the description's). They were the
  * attributes' own loadClassMetadata(), a hook typed on Doctrine's ClassMetadata;
  * the attributes keep only their neutral part.
  *
@@ -38,6 +46,9 @@ final class DoctrineMappingHooks
         Cache::class => 'cache',
         Vault::class => 'vault',
         OrderColumn::class => 'orderColumn',
+        DiscriminatorEntry::class => 'discriminatorEntry',
+        Cascade::class => 'cascades',
+        OrphanRemoval::class => 'cascades',
     ];
 
     public static function load(AttributeInterface $attribute, ClassMetadata $classMetadata, string $target, ?string $targetValue = null): void
@@ -55,7 +66,8 @@ final class DoctrineMappingHooks
     /** #[Cache]: the class's region, and its associations' toward cached entities that its flags allow. */
     public static function cache(Cache $cache, ClassMetadata $classMetadata, string $target, ?string $targetValue = null): void
     {
-        $region = $cache->getRegion($classMetadata);
+        $rootTable = AbstractAttribute::getEntityManager()->getConfiguration()->getNamingStrategy()->classToTableName($classMetadata->rootEntityName);
+        $region = $cache->getRegion($rootTable);
 
         $usage = match ($cache->usage) {
             Cache::READ_ONLY => ClassMetadata::CACHE_USAGE_READ_ONLY,
@@ -89,11 +101,51 @@ final class DoctrineMappingHooks
 
                 $classMetadata->associationMappings[$targetValue]['cache'] = $classMetadata->associationMappings[$targetValue]['cache'] ?? [
                     'usage' => $usage,
-                    'region' => $cache->getRegionProperty($classMetadata, $targetValue),
+                    'region' => $cache->getRegionProperty($rootTable, $targetValue),
                 ];
 
                 break;
         }
+    }
+
+    /**
+     * #[Cascade] / #[OrphanRemoval]: every association of the class given the cascade and orphan removal the core reads
+     * (Cascade::resolve(), what Eloquent's cascades take too).
+     */
+    public static function cascades(AttributeInterface $attribute, ClassMetadata $classMetadata, string $target, ?string $targetValue = null): void
+    {
+        foreach (array_keys($classMetadata->associationMappings) as $property) {
+            $mapping = $classMetadata->associationMappings[$property];
+            [$cascade, $orphanRemoval] = Cascade::resolve($classMetadata->getName(), $property, array_values((array) ($mapping['cascade'] ?? [])), (bool) ($mapping['orphanRemoval'] ?? false));
+            // ORM 3's mapping derives its isCascade*() flags from the list.
+            $mapping['cascade'] = $cascade;
+            if ($orphanRemoval !== (bool) ($mapping['orphanRemoval'] ?? false)) {
+                $mapping['orphanRemoval'] = $orphanRemoval;
+            }
+            $classMetadata->associationMappings[$property] = $mapping;
+        }
+    }
+
+    /**
+     * #[DiscriminatorEntry] on a root entity: its map's keys, each class under the value the core gives it
+     * (DiscriminatorRule::value(), the same as the description's), and the root's own value.
+     */
+    public static function discriminatorEntry(DiscriminatorEntry $entry, ClassMetadata $classMetadata, string $target, ?string $targetValue = null): void
+    {
+        if (EntityExtension::TARGET_CLASS !== $target || $classMetadata->parentClasses || !$classMetadata->discriminatorMap) {
+            return;
+        }
+        if (empty($classMetadata->discriminatorColumn)) {
+            throw new \LogicException(sprintf('#[DiscriminatorEntry] on %s, which maps no discriminator column.', $classMetadata->getName()));
+        }
+
+        $values = [];
+        foreach ($classMetadata->discriminatorMap as $className) {
+            $values[$className] = DiscriminatorRule::value($className);
+        }
+
+        $classMetadata->discriminatorMap = array_flip($values);
+        $classMetadata->discriminatorValue = $values[$classMetadata->getName()] ?? throw new \LogicException(sprintf('Missing discriminator entry in %s.', $classMetadata->getName()));
     }
 
     /** #[Vault]: the unique constraint over its fields, and a translation's over its vault. */
@@ -133,6 +185,15 @@ final class DoctrineMappingHooks
     {
         if (!$orderColumn->supports($target, $targetValue, $classMetadata)) {
             return;
+        }
+        // Doctrine's metadata being built: a set's column or a to-many association, never beside an #[OrderBy].
+        $field = EntityFields::aliases($classMetadata->getName())[$targetValue] ?? $targetValue;
+        $fieldType = $classMetadata->hasField($field) ? $classMetadata->getTypeOfField($field) : null;
+        if (!is_subclass_of((string) Enumerations::classOf($fieldType), SetType::class) && !($classMetadata->hasAssociation($field) && $classMetadata->isCollectionValuedAssociation($field))) {
+            return;
+        }
+        if (array_key_exists($targetValue, AbstractAttribute::getAttributeReader()->getPropertyAttributes($classMetadata->getName(), OrderBy::class))) {
+            throw new \Exception('@OrderBy metadata conflicts with @OrderColumn for "'.$classMetadata->getName()."::$targetValue\"");
         }
 
         // Doctrine's manipulator, on the metadata being built: the reader's reads the entities' shapes on omnisense/omnibase

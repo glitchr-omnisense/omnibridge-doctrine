@@ -36,12 +36,12 @@ final class DoctrineCacheBackend implements CacheBackend
             }
 
             if ($manipulator->isToManySide($entity, $property)) {
-                $secondLevelCache->evictCollection($classMetadata->getName(), $property, $entity->getId());
+                $secondLevelCache->evictCollection($classMetadata->getName(), $property, $classMetadata->getIdentifierValues($entity));
 
                 return;
             }
 
-            $secondLevelCache->evictEntity($classMetadata->getName(), $entity->getId());
+            $secondLevelCache->evictEntity($classMetadata->getName(), $classMetadata->getIdentifierValues($entity));
 
             return;
         }

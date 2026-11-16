@@ -20,7 +20,12 @@ final class DoctrineBulkDeletes implements BulkDeletes
             if (1 !== preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $field)) {
                 throw new \InvalidArgumentException(sprintf('"%s" is no field name.', $field));
             }
-            $where[] = 'e.'.$field.' = :p'.$i;
+            if (null === $criteria[$field]) {
+                $where[] = 'e.'.$field.' IS NULL';
+
+                continue;
+            }
+            $where[] = 'e.'.$field.(\is_array($criteria[$field]) ? ' IN (:p'.$i.')' : ' = :p'.$i);
             $parameters['p'.$i] = $criteria[$field];
         }
 

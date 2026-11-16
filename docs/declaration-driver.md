@@ -19,8 +19,8 @@ new DeclarationDriver(
 
 | Method | What it does |
 |---|---|
-| `getAllClassNames()` | the wrapped driver's: which classes exist stays its answer |
-| `isTransient($className)` | the wrapped driver's |
+| `getAllClassNames()` | the wrapped driver's classes, listed as it lists them (a chain by namespace; an attribute driver's folders: each file included, the classes PHP declared from them, its class locator's), each kept when `isTransient()` says no |
+| `isTransient($className)` | `false` for a class whose declaration is an `Entity` or a `MappedSuperclass`; otherwise the wrapped driver's |
 | `loadMetadataForClass($className, $metadata)` | reads the class's declaration; none (an XML mapping, a class the declaration source does not hold) leaves the class to the wrapped driver; otherwise maps it as below |
 | `getDriver()`, `getDeclarations()` | what it was built with |
 | `__call()` | any other method of the wrapped driver (`MappingDriverChain::getDrivers()`...) |
@@ -31,6 +31,13 @@ The declaration is read as doctrine/orm 3's `AttributeDriver::loadMetadataForCla
 attributes - the same calls on the `ClassMetadata`, in the same order - with each attribute
 instantiated from its arguments as written (a nested one, a `JoinTable`'s columns, in turn), so the
 classes of `Doctrine\ORM\Mapping` must be installed here (they are: doctrine/orm is required).
+
+The classes may be written in omnibase's own vocabulary (`use Base\Mapping as ORM;`, the core's
+`src/Mapping`: the same attributes, parameters and defaults - decision Q8) or in Doctrine's: the
+declaration holds the attributes' short names either way, and the driver builds Doctrine's own
+attribute objects from them. Doctrine's `AttributeDriver` knows no `Base\Mapping\Entity` and calls such
+a class transient; that is why the classes and their transience are the declarations' answer here,
+the wrapped driver keeping only which folders (or which class locator) hold them.
 
 - The class: `Entity` (repository class, read-only), `MappedSuperclass` (repository class),
   `Embeddable`; otherwise `MappingException::classIsNotAValidEntityOrMappedSuperClass()`, as Doctrine.

@@ -127,7 +127,7 @@ final class MappingDriver implements PersistenceMappingDriver
 
     /**
      * The `resolveDiscriminator` event, then the discriminator value of a concrete class found in the map it was
-     * given: what Omnibridge\Doctrine\Omnibase\Database\Mapping\ClassMetadataFactory::resolveDiscriminator() did, before the class was read.
+     * given: what Base\Database\Mapping\ClassMetadataFactory::resolveDiscriminator() did, before the class was read.
      */
     private function resolveDiscriminator(ClassMetadata $class): void
     {
@@ -154,8 +154,11 @@ final class MappingDriver implements PersistenceMappingDriver
             }
         }
 
+        // A map entry naming the class by an alias (App\Entity\X for Base\Entity\X): its real name, read by reflection -
+        // never by loading the entry's metadata, which resolves its own discriminator through this map and, for a class
+        // the map does not hold (an entity outside the entity manager's paths), loops until memory is exhausted.
         foreach ($class->discriminatorMap as $discriminatorValue => $discriminatorClass) {
-            if ($class->name === $entityManager->getMetadataFactory()->getMetadataFor($discriminatorClass)->getName()) {
+            if (class_exists($discriminatorClass) && $class->name === (new \ReflectionClass($discriminatorClass))->getName()) {
                 $class->discriminatorValue = $discriminatorValue;
 
                 return;
