@@ -21,8 +21,10 @@ final class MetadataSnapshotTest extends TestCase
         $snapshot = MetadataSnapshot::of($entityManager, [Thread::class]);
 
         self::assertSame([Thread::class], array_keys($snapshot['classes']));
-        self::assertSame('thread', $snapshot['classes'][Thread::class]['table']['name']);
-        self::assertArrayHasKey('slug', $snapshot['classes'][Thread::class]['fieldMappings']);
+        /** @var array{table: array{name: string}, fieldMappings: array<string, mixed>} $thread */
+        $thread = $snapshot['classes'][Thread::class];
+        self::assertSame('thread', $thread['table']['name']);
+        self::assertArrayHasKey('slug', $thread['fieldMappings']);
         self::assertSame($snapshot, json_decode((string) json_encode($snapshot), true), 'plain data: it goes through JSON unchanged');
         self::assertArrayHasKey('string', $snapshot['types']);
     }

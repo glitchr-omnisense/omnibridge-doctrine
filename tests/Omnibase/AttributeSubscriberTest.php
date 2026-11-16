@@ -41,6 +41,8 @@ final class AttributeSubscriberTest extends TestCase
         $entityManager->remove($thread);
         $entityManager->flush();
 
-        self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM '.$entityManager->getClassMetadata(Thread::class)->getTableName()));
+        $count = $connection->fetchOne('SELECT COUNT(*) FROM '.$entityManager->getClassMetadata(Thread::class)->getTableName());
+        self::assertIsNumeric($count);
+        self::assertSame(0, (int) $count);
     }
 }

@@ -114,16 +114,33 @@ final class DeclarationDriver implements MappingDriver
 
         // Its own listing first: it includes the files of its folders (or asks its class locator).
         $classNames = $driver->getAllClassNames();
-        $located = (function (): array {
-            $locator = property_exists($this, 'classLocator') ? $this->classLocator : null;
+        $locator = (fn (): mixed => property_exists($this, 'classLocator') ? $this->classLocator : null)->call($driver);
+        $located = \is_object($locator) && method_exists($locator, 'getClassNames') ? self::strings($locator->getClassNames()) : [];
+        $extension = method_exists($driver, 'getFileExtension') ? $driver->getFileExtension() : null;
+        $declared = self::declaredIn(
+            method_exists($driver, 'getPaths') ? self::strings($driver->getPaths()) : [],
+            method_exists($driver, 'getExcludePaths') ? self::strings($driver->getExcludePaths()) : [],
+            \is_string($extension) ? $extension : '.php',
+        );
 
-            return $locator?->getClassNames() ?? [];
-        })->call($driver);
+        $kept = [];
+        foreach (array_unique([...$declared, ...$located, ...$classNames]) as $className) {
+            if (class_exists($className) && !$this->isTransient($className)) {
+                $kept[] = $className;
+            }
+        }
 
-        return array_values(array_filter(
-            array_unique([...self::declaredIn($driver->getPaths(), $driver->getExcludePaths(), $driver->getFileExtension()), ...$located, ...$classNames]),
-            fn (string $className): bool => !$this->isTransient($className),
-        ));
+        return $kept;
+    }
+
+    /**
+     * The strings of a value a driver answers untyped (its paths, its locator's classes).
+     *
+     * @return list<string>
+     */
+    private static function strings(mixed $value): array
+    {
+        return \is_array($value) ? array_values(array_filter($value, \is_string(...))) : [];
     }
 
     /**
@@ -145,6 +162,7 @@ final class DeclarationDriver implements MappingDriver
             }
             $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::LEAVES_ONLY);
             foreach ($iterator as $file) {
+                /** @var \SplFileInfo $file */
                 if (!$file->isFile() || !str_ends_with($file->getFilename(), $extension)) {
                     continue;
                 }

@@ -36,13 +36,16 @@ final class CacheEvictionTest extends TestCase
         $entityManager->persist($wallet);
         $entityManager->flush();
         $id = $wallet->id;
+        self::assertNotNull($id);
         $entityManager->clear();
+        /** @var ServiceEntityRepository<Wallet> $wallets */
         $wallets = new ServiceEntityRepository(DoctrineFinders::over($entityManager), Wallet::class);
         self::assertSame(10, $wallets->find($id)?->balance);   // now in the cache
         $entityManager->clear();
 
         self::assertSame(1, $wallets->updateBy(['id' => $id], ['balance' => Change::add(-3)]));
         $entityManager->clear();
+        // @phpstan-ignore nullsafe.neverNull (PHPStan keeps find()'s first answer; read again after updateBy(), it may be null)
         self::assertSame(7, $wallets->find($id)?->balance, 'not the cached 10');
 
         $entityManager->clear();
@@ -102,19 +105,21 @@ final class CacheEvictionTest extends TestCase
         [$memberId, $teamId] = [$member->id, $team->id];
         $entityManager->clear();
         // Both collections read once: now in the cache.
-        self::assertCount(1, $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Member::class, $memberId)?->teams ?? []);
-        self::assertCount(1, $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Team::class, $teamId)?->members ?? []);
+        self::assertCount(1, $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Member::class, $memberId)->teams ?? []);
+        self::assertCount(1, $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Team::class, $teamId)->members ?? []);
         $entityManager->clear();
 
         $member = $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Member::class, $memberId);
+        self::assertNotNull($member);
         $team = $member->teams->first();
+        self::assertInstanceOf(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Team::class, $team);
         // Only the owning side, as User::removeGroup() does: the team's cached members must follow anyway.
         $member->teams->removeElement($team);
         $entityManager->flush();
         $entityManager->clear();
 
-        self::assertCount(0, $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Member::class, $memberId)?->teams ?? [], 'the owning side');
-        self::assertCount(0, $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Team::class, $teamId)?->members ?? [], 'the inverse side');
+        self::assertCount(0, $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Member::class, $memberId)->teams ?? [], 'the owning side');
+        self::assertCount(0, $entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Team::class, $teamId)->members ?? [], 'the inverse side');
         self::assertNotNull($entityManager->find(\Omnibridge\Doctrine\Tests\Fixtures\Cached\Team::class, $teamId), 'the team kept');
     }
 }

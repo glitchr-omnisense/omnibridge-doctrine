@@ -16,6 +16,7 @@ use Base\Mapping as ORM;
 #[Cascade(column: 'likes', value: ['persist', 'remove'])]
 class Album extends Thread
 {
+    /** @var mixed the parent's children, under another name */
     #[Alias(column: 'children')]
     #[OrphanRemoval]
     protected $photos;

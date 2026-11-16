@@ -39,7 +39,9 @@ final class TypesTest extends TestCase
             $type = Type::getType($name);
             $value = str_contains($name, 'immutable') ? $paris : \DateTime::createFromImmutable($paris);
             self::assertSame('2026-10-18 07:30:00', $type->convertToDatabaseValue($value, $platform), $name);
-            self::assertSame('2026-10-18T07:30:00+00:00', $type->convertToPHPValue('2026-10-18 07:30:00', $platform)->format(\DATE_ATOM), $name);
+            $converted = $type->convertToPHPValue('2026-10-18 07:30:00', $platform);
+            self::assertInstanceOf(\DateTimeInterface::class, $converted);
+            self::assertSame('2026-10-18T07:30:00+00:00', $converted->format(\DATE_ATOM), $name);
         }
     }
 

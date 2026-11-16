@@ -24,7 +24,7 @@ final class VersionableSubscriberTest extends TestCase
         if (!class_exists(Revision::class)) {
             self::markTestSkipped('omnisense/omnibase is not installed.');
         }
-        $core = \dirname((new \ReflectionClass(Revision::class))->getFileName(), 2);
+        $core = \dirname((string) (new \ReflectionClass(Revision::class))->getFileName(), 2);
         $entityManager = EntityManagers::create(DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]), [\dirname(__DIR__).'/Fixtures/Versioned', $core], true, configure: static function (Configuration $configuration): void {
             Mapping::configure($configuration);
         });
@@ -44,6 +44,7 @@ final class VersionableSubscriberTest extends TestCase
         }
 
         $entityManager->clear();
+        /** @var list<Revision> $revisions */
         $revisions = $entityManager->createQuery('SELECT r FROM '.Revision::class.' r ORDER BY r.id')->getResult();
         self::assertCount(1, $revisions, 'max_revisions 1: the older revision is purged');
         self::assertSame(['title' => ['second', 'third']], $revisions[0]->getEntityData(), 'the newest one is kept');

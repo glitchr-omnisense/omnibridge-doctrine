@@ -78,18 +78,23 @@ final class DeclarationDriverTest extends TestCase
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $base = EntityManagers::create($connection, [$directory], true, configure: static function (Configuration $configuration): void {
             $configuration->setNamingStrategy(new NamingStrategy(new CamelCaseNaming(['Omnibridge\\Doctrine\\Tests\\Fixtures\\Base\\'])));
-            $configuration->setMetadataDriverImpl(new DeclarationDriver($configuration->getMetadataDriverImpl()));
+            $attributes = $configuration->getMetadataDriverImpl();
+            self::assertNotNull($attributes);
+            $configuration->setMetadataDriverImpl(new DeclarationDriver($attributes));
         });
 
         $driver = $base->getConfiguration()->getMetadataDriverImpl();
+        self::assertInstanceOf(DeclarationDriver::class, $driver);
+        $doctrineDriver = $doctrine->getConfiguration()->getMetadataDriverImpl();
+        self::assertNotNull($doctrineDriver);
         self::assertSame([], $driver->getDriver()->getAllClassNames(), 'Doctrine\'s attribute driver knows no attribute of Base\\Mapping');
-        $expected = array_map(static fn (string $className) => str_replace(self::DOCTRINE, self::BASE, $className), $doctrine->getConfiguration()->getMetadataDriverImpl()->getAllClassNames());
+        $expected = array_map(static fn (string $className) => str_replace(self::DOCTRINE, self::BASE, $className), $doctrineDriver->getAllClassNames());
         $listed = $driver->getAllClassNames();
         sort($expected);
         sort($listed);
         self::assertSame($expected, $listed, 'the same classes, listed by their declarations');
-        self::assertFalse($driver->isTransient(self::BASE.'\\Thread'));
-        self::assertFalse($driver->isTransient(self::BASE.'\\Timestamps'), 'a mapped superclass');
+        self::assertFalse($driver->isTransient(self::written('Thread')));
+        self::assertFalse($driver->isTransient(self::written('Timestamps')), 'a mapped superclass');
 
         foreach (Harness::classes() as $className) {
             $expected = json_encode(Harness::snapshot($doctrine->getClassMetadata($className)), \JSON_THROW_ON_ERROR);
@@ -128,5 +133,18 @@ final class DeclarationDriverTest extends TestCase
 
         $this->expectException(MappingException::class);
         $driver->loadMetadataForClass(\stdClass::class, $metadata);
+    }
+
+    /**
+     * A class of the fixtures written in Base\Mapping (testTheClassesWrittenInOmnibasesVocabularyAreTheSameEntities: loaded by its autoloader).
+     *
+     * @return class-string
+     */
+    private static function written(string $name): string
+    {
+        $className = self::BASE.'\\'.$name;
+        self::assertTrue(class_exists($className), $className);
+        /** @var class-string $className */
+        return $className;
     }
 }
