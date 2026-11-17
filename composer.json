@@ -12,19 +12,19 @@
         "php": ">=8.2",
         "beberlei/doctrineextensions": "^1.0",
         "doctrine/dbal": "^4.2",
-        "doctrine/orm": "^3.4",
+        "doctrine/orm": "^3.8",
+        "doctrine/orm-plugin-second-level-cache": "^1.0",
         "omnisense/omnibridge": "^2.0",
         "scienta/doctrine-json-functions": "~4.3",
         "symfony/cache": "^7.0|^8.0"
     },
     "require-dev": {
         "omnisense/omnibase": "^7.0",
-        "doctrine/orm-plugin-second-level-cache": "^1.0",
         "phpunit/phpunit": "^11.5",
         "symfony/validator": "^7.0|^8.0"
     },
     "suggest": {
-        "omnisense/omnibase": "The core this package is the Doctrine persistence of (^1.0)"
+        "omnisense/omnibase": "The core this package is the Doctrine persistence of (^7.0)"
     },
     "autoload": {
         "psr-4": {

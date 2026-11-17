@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c70583a22240c4736d6dfadeaee952a2",
+    "content-hash": "55bb088484c55d41416555fdccd8d247",
     "packages": [
         {
             "name": "beberlei/doctrineextensions",
@@ -724,7 +724,46 @@
                 "issues": "https://github.com/doctrine/orm/issues",
                 "source": "https://github.com/doctrine/orm/tree/3.8.0"
             },
-            "time": "2026-11-14T11:18:54+00:00"
+            "time": "2026-11-14T11:18:54+00:00",
+            "published-time": "2026-11-14T14:12:03+00:00"
+        },
+        {
+            "name": "doctrine/orm-plugin-second-level-cache",
+            "version": "1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/doctrine/orm-plugin-second-level-cache.git",
+                "reference": "12bd712c0a8dcae6635adcb53d33981942f0f52d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/doctrine/orm-plugin-second-level-cache/zipball/12bd712c0a8dcae6635adcb53d33981942f0f52d",
+                "reference": "12bd712c0a8dcae6635adcb53d33981942f0f52d",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Doctrine\\ORM\\Cache\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Benjamin Eberlei",
+                    "email": "kontakt@beberlei.de"
+                }
+            ],
+            "description": "Required package to make second level cache working on doctrine/orm from version 3.8+ on.",
+            "support": {
+                "issues": "https://github.com/doctrine/orm-plugin-second-level-cache/issues",
+                "source": "https://github.com/doctrine/orm-plugin-second-level-cache/tree/1.0.2"
+            },
+            "time": "2026-11-05T13:05:51+00:00",
+            "published-time": "2026-11-05T13:06:48+00:00"
         },
         {
             "name": "doctrine/persistence",
@@ -2573,43 +2612,6 @@
             "time": "2025-09-16T12:23:56+00:00"
         },
         {
-            "name": "doctrine/orm-plugin-second-level-cache",
-            "version": "1.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/doctrine/orm-plugin-second-level-cache.git",
-                "reference": "12bd712c0a8dcae6635adcb53d33981942f0f52d"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/orm-plugin-second-level-cache/zipball/12bd712c0a8dcae6635adcb53d33981942f0f52d",
-                "reference": "12bd712c0a8dcae6635adcb53d33981942f0f52d",
-                "shasum": ""
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Doctrine\\ORM\\Cache\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Benjamin Eberlei",
-                    "email": "kontakt@beberlei.de"
-                }
-            ],
-            "description": "Required package to make second level cache working on doctrine/orm from version 3.8+ on.",
-            "support": {
-                "issues": "https://github.com/doctrine/orm-plugin-second-level-cache/issues",
-                "source": "https://github.com/doctrine/orm-plugin-second-level-cache/tree/1.0.2"
-            },
-            "time": "2026-11-05T13:05:51+00:00"
-        },
-        {
             "name": "egulias/email-validator",
             "version": "4.0.4",
             "source": {
@@ -3771,7 +3773,6 @@
                 "web-auth/webauthn-symfony-bundle": "Passkeys: Base\\Repository\\User\\PasskeyRepository and Base\\Security\\WebauthnUserEntityRepository are its credential and user repositories (^5.3)"
             },
             "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
             "extra": {
                 "omnibridge": {
                     "stubs": [
@@ -3831,6 +3832,7 @@
                     "Tests\\Base\\": "./tests"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "scripts": {
                 "test": [
                     "phpunit"
@@ -7661,12 +7663,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": ">=8.2"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.9.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.11.0"
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.2
+
+Dependencies: this package now requires `doctrine/orm` ^3.8 and `doctrine/orm-plugin-second-level-cache` ^1.0.
+Doctrine ORM 3.8 moved the second-level cache out to that plugin, and this package uses the cache
+(`DoctrineCacheBackend` evicts through `getCache()`); a site enabling `second_level_cache` failed on 3.8 with
+"Using the second level cache requires doctrine/orm-plugin-second-level-cache". The plugin autoloads
+`Doctrine\ORM\Cache\`, which ORM before 3.8 still ships, hence the floor at 3.8.
+
 ## 3.0.1
 
 Fixes found once omnisense/omnibase's PHPStan analyses this package's src/Base and src/Omnibase (no signature changes):
