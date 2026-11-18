@@ -1,5 +1,56 @@
 # Changelog
 
+## 4.0.0
+
+doctrine/dbal 4.6 and doctrine/orm 3.8's deprecations that 3.0.4 left for a major, out of the bridge: its src/ triggers
+none under DBAL 4.6 / ORM 3.8. doctrine/dbal ^4.6 (`Configuration::setTypeProvider()`).
+
+- The date types are immutable. `Type\DateTimeType` (omnibase's `datetime` and `datetimetz`,
+  `Base\Database\Type\DateTimeTypeUTC`) extends DBAL's `DateTimeImmutableType` (DBAL 4.6 deprecates the mutable
+  `DateTimeType`, DBAL 5 removes it): a column of these types is read as a `\DateTimeImmutable` in UTC. Any
+  `\DateTimeInterface` is written, in UTC, and the object given is left as it is (3.x moved the entity's own
+  `\DateTime` to UTC in place). `utc_datetime` (`Type\UtcDateTimeType`, `Base\Database\Type\UtcDateTimeType`) is read
+  as `utc_datetime_immutable` is. The columns are DATETIME as before: no schema change.
+- The types are the connection's. `Types::register()` (both) changed DBAL's static registry, deprecated in DBAL 4.6 and
+  gone in 5; `provider()` puts them in a `TypeRegistry` - the one given, or a new one - for the connection's
+  configuration. `EntityManagers::create()` gives a connection configured without a provider of its own the bridge's
+  (its platform too, when it was resolved already) and the bridge's types to a `TypeRegistry` the host gave it;
+  `Omnibase\Mapping::register()` puts omnibase's in the connection's provider. `EnumerationsMiddleware` is removed (a
+  DBAL middleware cannot reach the connection's configuration). A `ClassMetadataManipulator` made without an entity
+  manager answers an enumeration from `Base\Database\Type\Enumerations` and the core's types from a provider of its own;
+  the MySQL schema manager takes the SET type from the connection's types.
+- `EntityManagers::create()` turns doctrine/orm 3.8's schema editor API on, and registers `ForeignKeyNames` on
+  `ToolEvents::postGenerateSchema`: a foreign key the API leaves unnamed is given the name the SchemaTool gave before
+  (`FK_` and the CRC32 of the table's and columns' names), the one the sites' migrations wrote - on the migrated dev
+  copies of three sites (123, 147 and 240 keys), the update SQL and every key, index and unique name
+  are the same with the API on and off.
+- `QueryPages::paginator()` returns doctrine/orm 3.8's `OffsetPaginator`, as 3.0.3 announced.
+- The Doctrine-vocabulary test fixture orders by `\SortDirection`; omnibase's vocabulary (`Base\Mapping\OrderBy`) is
+  given to Doctrine as `SortDirection` by `DeclarationDriver` since 3.0.4, strings or not.
+
+### UPGRADE from 3.x
+
+- `Omnibridge\Doctrine\Types::register()` -> `Types::provider()`, given to the connection's configuration:
+  `DriverManager::getConnection($parameters, (new Configuration())->setTypeProvider(Types::provider()))`.
+  `EntityManagers::create()` does it for a connection that has none.
+- `Omnibridge\Doctrine\Omnibase\Types::register($types, $directories)` ->
+  `Types::provider($types, Types::enumerations($directories), $registry)`: the enumerations found (name => class),
+  no longer the folders.
+- `Omnibase\Types::registerEnumerations($enumerations, $override)` ->
+  `registerEnumerations($registry, $enumerations, $override)`.
+- `Omnibase\EnumerationsMiddleware` is gone: give the connection's configuration the provider holding the enumerations.
+  A Symfony host does it in omnibridge/symfony (each `doctrine.dbal.<name>_connection.configuration`).
+- Code reading DBAL's static registry (`Type::getType()`, `Type::hasType()`, `Type::getTypeRegistry()`) finds none of
+  omnibase's types any more: ask the connection's (`$connection->getConfiguration()->getTypeProvider()`).
+- An entity property mapped `datetime`, `datetimetz` or `utc_datetime` receives a `\DateTimeImmutable`: a property, a
+  getter or a parameter typed `\DateTime` becomes `\DateTimeImmutable` (or `\DateTimeInterface`), code changing the
+  value in place (`->modify()`, `->setTime()`) assigns the result instead. Writing a `\DateTime` still works.
+- `QueryPages::paginator()` returns an `OffsetPaginator`: `$pages->paginator()->paginate($pages->query(0, $size),
+  Window::fromPageNumberAndSize($number, $size))`.
+- An entity manager built by `EntityManagers::create()` has the schema editor API on; a `configure:` closure may still
+  turn it off (deprecated in doctrine/orm 3.8). A host building its own entity manager registers `ForeignKeyNames` on
+  `postGenerateSchema` to keep the foreign keys' names.
+
 ## 3.0.4
 
 doctrine/dbal 4.5 and 4.6's deprecations out of the bridge, no public signature changed:
