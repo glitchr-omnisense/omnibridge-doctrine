@@ -11,13 +11,14 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * A DQL query paged (plan "omnibase agnostic", step F2e): what Base\Service\Model\Pagination did with a
- * Query, moved here as it was - the rows grouped by id (GroupByWalker) through Doctrine's Paginator, the
- * translations joined (TranslatableWalker), the total counted by CountWalker on a clone. Moves to
- * omnibridge/doctrine at F3.
+ * Query, moved here as it was - the rows grouped by id (GroupByWalker), the translations joined
+ * (TranslatableWalker), a page the paged query's own window, the total counted by CountWalker on a clone.
+ * The pages never go through Doctrine's Paginator (deprecated by doctrine/orm 3.8): paginator() builds one
+ * only when it is called.
  */
 final class QueryPages implements Pages
 {
-    private readonly Paginator $paginator;
+    private readonly Query $paged;
     private ?int $count = null;
 
     public function __construct(private readonly Query $query)
@@ -26,7 +27,7 @@ final class QueryPages implements Pages
         $paged->setHint(Query::HINT_CUSTOM_TREE_WALKERS, [GroupByWalker::class]);
         $paged->setHint(GroupByWalker::HINT_GROUP_ARRAY, ['id']);
         $paged->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER, TranslatableWalker::class);
-        $this->paginator = new Paginator($paged);
+        $this->paged = $paged;
     }
 
     public function count(): int
@@ -42,12 +43,18 @@ final class QueryPages implements Pages
     /** The paged query of that page (Pagination::getQuery()). */
     public function query(int $offset, int $limit): Query
     {
-        return $this->paginator->getQuery()->setFirstResult($offset)->setMaxResults($limit);
+        return $this->paged->setFirstResult($offset)->setMaxResults($limit);
     }
 
+    /**
+     * Doctrine's Paginator of the paged query, built when it is called.
+     *
+     * @deprecated since 3.0.3, doctrine/orm 3.8 deprecates Paginator: page with slice() and count(); 4.0 will return
+     *             Doctrine\ORM\Tools\Pagination\OffsetPaginator
+     */
     public function paginator(): Paginator
     {
-        return $this->paginator;
+        return new Paginator($this->paged);
     }
 
     /** The query counting the rows of $query (Pagination::getCountQuery()). */

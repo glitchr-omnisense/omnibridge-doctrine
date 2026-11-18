@@ -1,5 +1,22 @@
 # Changelog
 
+## 3.0.3
+
+doctrine/orm 3.8's deprecations out of the bridge, no public signature changed:
+- `QueryPages` no longer builds Doctrine's `Paginator` (deprecated in 3.8) to page. Its pages never went
+  through it - `slice()` runs the paged query with its own window, `count()` the CountWalker clone - so the
+  results are the same. `paginator()` keeps its signature and builds the `Paginator` only when it is called; it
+  is deprecated, and 4.0 will return 3.8's `OffsetPaginator`.
+- `MetadataDescription::of()` reads the tables from a `SchemaTool` on the schema editor API where DBAL has it
+  (4.5 and later), on a copy of the entity manager's configuration, which stays as the host set it. A foreign key
+  that API leaves unnamed is given the name DBAL's mutable `Table` gave it ("FK_" and the CRC32 of the table's and
+  columns' names), so the description is the same.
+- Column options: a column's `charset` and `collation` stay in its `options`, as 3.8's `AttributeDriver` writes
+  them and as the schema editor API takes them without deprecation; `DeclarationDriver` already passed them so.
+- `DeclarationDriver`: a `#[CustomIdGenerator]` without `#[GeneratedValue]` is the `CUSTOM` strategy, as 3.8's
+  `AttributeDriver` reads it (`NONE` before); an explicit `#[GeneratedValue(strategy: 'NONE')]` keeps the
+  identifier assigned. No entity of the ensemble declares one.
+
 ## 3.0.2
 
 Dependencies: this package now requires `doctrine/orm` ^3.8 and `doctrine/orm-plugin-second-level-cache` ^1.0.

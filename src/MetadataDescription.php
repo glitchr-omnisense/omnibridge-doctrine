@@ -6,8 +6,11 @@ use Doctrine\DBAL\Schema\Column as SchemaColumn;
 use Doctrine\DBAL\Schema\Exception\InvalidState;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index as SchemaIndex;
+use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table as SchemaTable;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\Decorator\EntityManagerDecorator;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\AssociationMapping;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -77,12 +80,41 @@ final class MetadataDescription
         }
 
         $tables = [];
-        foreach ((new SchemaTool($entityManager))->getSchemaFromMetadata($metadata)->getTables() as $table) {
-            $tables[$table->getName()] = self::table($table, $values);
+        $length = $entityManager->getConnection()->getDatabasePlatform()->getMaxIdentifierLength();
+        foreach (self::schemaTool($entityManager)->getSchemaFromMetadata($metadata)->getTables() as $table) {
+            $tables[$table->getName()] = self::describe($table, $values, $length);
         }
         ksort($tables);
 
         return new Description($entities, $tables);
+    }
+
+    /**
+     * The SchemaTool of $entityManager on the schema editor API where DBAL has it (4.5 and later; doctrine/orm 3.8
+     * deprecates the mutable schema objects there): the entity manager's own configuration with that API, a copy, so
+     * the host's SchemaTools are left as configured.
+     */
+    private static function schemaTool(EntityManagerInterface $entityManager): SchemaTool
+    {
+        $configuration = $entityManager->getConfiguration();
+        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.4, which composer.json still allows, has no editor API)
+        if ($configuration->getUseSchemaEditorApi() || !method_exists(Schema::class, 'edit')) {
+            return new SchemaTool($entityManager);
+        }
+        $configuration = clone $configuration;
+        $configuration->setUseSchemaEditorApi(true);
+
+        return new SchemaTool(new class($entityManager, $configuration) extends EntityManagerDecorator {
+            public function __construct(EntityManagerInterface $wrapped, private readonly Configuration $configuration)
+            {
+                parent::__construct($wrapped);
+            }
+
+            public function getConfiguration(): Configuration
+            {
+                return $this->configuration;
+            }
+        });
     }
 
     public static function entity(ClassMetadata $metadata): Entity
@@ -196,6 +228,18 @@ final class MetadataDescription
     /** @param (\Closure(Type): ?list<string>)|null $values */
     public static function table(SchemaTable $table, ?\Closure $values = null): Table
     {
+        return self::describe($table, $values, null);
+    }
+
+    /**
+     * The table, a foreign key the schema editor API left unnamed given the name DBAL's mutable Table gives it
+     * (Table::_generateIdentifierName(), "FK_" and the CRC32 of the table's and the local columns' names, cut to
+     * the platform's identifier length): the name the SchemaTool without that API gave, and gives on sites.
+     *
+     * @param (\Closure(Type): ?list<string>)|null $values
+     */
+    private static function describe(SchemaTable $table, ?\Closure $values, ?int $length): Table
+    {
         $columns = [];
         foreach ($table->getColumns() as $column) {
             $columns[$column->getName()] = self::column($column, $values);
@@ -211,7 +255,11 @@ final class MetadataDescription
 
         $foreignKeys = [];
         foreach ($table->getForeignKeys() as $foreignKey) {
-            $foreignKeys[$foreignKey->getName()] = self::foreignKey($foreignKey);
+            $name = $foreignKey->getName();
+            if ('' === $name && null !== $length) {
+                $name = strtoupper(substr('fk_'.implode('', array_map(static fn (string $name): string => dechex(crc32($name)), [$table->getName(), ...$foreignKey->getLocalColumns()])), 0, $length));
+            }
+            $foreignKeys[$name] = self::foreignKey($foreignKey, $name);
         }
         ksort($foreignKeys);
 
@@ -241,10 +289,10 @@ final class MetadataDescription
         );
     }
 
-    private static function foreignKey(ForeignKeyConstraint $foreignKey): ForeignKey
+    private static function foreignKey(ForeignKeyConstraint $foreignKey, string $name): ForeignKey
     {
         return new ForeignKey(
-            $foreignKey->getName(),
+            $name,
             $foreignKey->getLocalColumns(),
             $foreignKey->getForeignTableName(),
             $foreignKey->getForeignColumns(),

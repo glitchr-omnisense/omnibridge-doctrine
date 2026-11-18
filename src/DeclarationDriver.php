@@ -507,6 +507,10 @@ final class DeclarationDriver implements MappingDriver
                     'initialValue' => $sequence->initialValue,
                 ]);
             } elseif (isset($attributes[Mapping\CustomIdGenerator::class])) {
+                // doctrine/orm 3.8: a custom generator without #[GeneratedValue] is the CUSTOM strategy (NONE before).
+                if (!isset($attributes[Mapping\GeneratedValue::class])) {
+                    $metadata->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_CUSTOM);
+                }
                 $metadata->setCustomGeneratorDefinition(['class' => $attributes[Mapping\CustomIdGenerator::class]->class]);
             }
         } elseif (isset($attributes[Mapping\OneToOne::class])) {
