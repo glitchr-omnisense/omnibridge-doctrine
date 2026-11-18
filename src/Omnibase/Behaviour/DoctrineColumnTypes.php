@@ -5,7 +5,6 @@ namespace Omnibridge\Doctrine\Omnibase\Behaviour;
 use Base\Database\Backend\ColumnTypes;
 use Base\Database\Type\SetType;
 use Doctrine\DBAL\Types\JsonType;
-use Doctrine\DBAL\Types\Type;
 use Omnibridge\Doctrine\Omnibase\DoctrineUnitOfWork;
 use Omnibridge\Doctrine\Omnibase\EnumTypeAdapter;
 
@@ -25,11 +24,9 @@ final class DoctrineColumnTypes implements ColumnTypes
         if ('' === $type) {
             return false;
         }
-        // The connection's types (Type::hasType() and Type::getType() are deprecated since DBAL 4.6), DBAL's
-        // registry before 4.6: the same unless the host gave the connection a type provider of its own.
+        // The connection's types (Type::hasType() and Type::getType() are deprecated since DBAL 4.6).
         $configuration = $this->unitOfWork->entityManager()->getConnection()->getConfiguration();
-        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
-        $types = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
+        $types = $configuration->getTypeProvider();
         if (!$types->has($type)) {
             return false;
         }

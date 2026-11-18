@@ -283,11 +283,10 @@ class ClassMetadataManipulator extends MetadataManipulatorBase
         }
 
         try {
-            // The connection's types (Type::getType() is deprecated since DBAL 4.6), DBAL's registry before 4.6 or
-            // without an entity manager: the same unless the host gave the connection a type provider of its own.
+            // The connection's types (Type::getType() is deprecated since DBAL 4.6); DBAL's built-in ones without an
+            // entity manager.
             $configuration = $this->entityManager?->getConnection()->getConfiguration() ?? new \Doctrine\DBAL\Configuration();
-            // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
-            $doctrineType = (method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry())->get($type);
+            $doctrineType = $configuration->getTypeProvider()->get($type);
         } catch (Exception $e) {
             // throw new LogicException("Have you modified an entity (or an enum), or imported a new database ? Please doom the cache if so. Also make sure to use custom db features from base component", $e->getCode(), $e);
             return null;

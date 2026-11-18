@@ -15,7 +15,6 @@ use Base\Database\Repository\Finder\Subject;
 use Base\Service\Model\IntlDateTime;
 use DateTime;
 use Base\Database\Type\Utc;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Base\Database\Type\ConvertedInCriteria;
@@ -686,11 +685,9 @@ class DqlCompiler implements Subject
 
         $type = $this->classMetadata->getTypeOfField($fieldHead);
 
-        // The connection's types (Type::hasType() and Type::getType() are deprecated since DBAL 4.6), DBAL's
-        // registry before 4.6: the same unless the host gave the connection a type provider of its own.
+        // The connection's types (Type::hasType() and Type::getType() are deprecated since DBAL 4.6).
         $configuration = $this->entityManager->getConnection()->getConfiguration();
-        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
-        $types = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
+        $types = $configuration->getTypeProvider();
 
         return \is_string($type) && $types->has($type) && $types->get($type) instanceof ConvertedInCriteria ? $type : null;
     }

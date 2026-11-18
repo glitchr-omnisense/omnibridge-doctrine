@@ -30,8 +30,9 @@ the same tables - and Doctrine reading the structure described outside of it
   Checked against every table and join table of lesringostars
   (`tests/lesringostars-tables.json`). omnibase's `Base\Database\Mapping\NamingStrategy`
   extends it: one place says how a class becomes a table.
-- `Types::register()`: `datetime` and `datetimetz` written and read in UTC,
-  `utc_datetime` and `utc_datetime_immutable`, as omnibase registers them.
+- `Types::provider()`: a connection's type provider with `datetime` and `datetimetz`
+  written in UTC and read as `\DateTimeImmutable` in UTC, `utc_datetime` and
+  `utc_datetime_immutable`, as omnibase registers them (DBAL's static registry untouched).
 - `EntityManagers::create($connection, $paths)`: an entity manager with both,
   attribute mapping, PHP's native lazy objects; its `configure:` closure
   receives the configuration before the entity manager exists (a repository

@@ -53,11 +53,10 @@ final class MetadataSnapshot
         }
 
         $types = [];
-        // The connection's types, iterated (the built-in types, those resolved and those registered): DBAL 4's
-        // registry, reached through the connection's configuration since 4.6 (Type::getTypeRegistry() is deprecated there).
+        // The connection's types, iterated (the built-in types, those resolved and those registered), through the
+        // connection's configuration (Type::getTypeRegistry() is deprecated since DBAL 4.6).
         $configuration = $entityManager->getConnection()->getConfiguration();
-        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
-        foreach (iterator_to_array(method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry()) as $name => $type) {
+        foreach (iterator_to_array($configuration->getTypeProvider()) as $name => $type) {
             // An enumeration by its own class (an EnumTypeAdapter of it since step F2a, the class itself before).
             $types[$name] = $type instanceof EnumTypeAdapter ? $type->enumeration() : $type::class;
         }

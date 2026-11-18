@@ -9,7 +9,8 @@ use Omnibridge\Doctrine\Type\DateTimeType;
 use Omnibridge\Doctrine\Type\UtcDateTimeImmutableType;
 use Omnibridge\Doctrine\Type\UtcDateTimeType;
 use Omnibridge\Doctrine\Types;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Configuration;
+use Doctrine\DBAL\Types\TypeRegistry;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -41,20 +42,44 @@ final class TypesTest extends TestCase
         }
     }
 
-    /** One time: every date and time type registered writes and reads UTC, the immutable ones too. */
-    public function testEveryDateTimeTypeRegisteredIsUtc(): void
+    /** One time: every date and time type of the provider writes and reads UTC, the immutable ones too. */
+    public function testEveryDateTimeTypeOfTheProviderIsUtc(): void
     {
-        Types::register();
+        $types = Types::provider();
         $platform = new MySQLPlatform();
         $paris = new \DateTimeImmutable('2026-10-18 09:30:00', new \DateTimeZone('Europe/Paris'));
         foreach (['datetime', 'datetimetz', 'datetime_immutable', 'datetimetz_immutable', 'utc_datetime', 'utc_datetime_immutable'] as $name) {
-            $type = Type::getType($name);
-            $value = str_contains($name, 'immutable') ? $paris : \DateTime::createFromImmutable($paris);
-            self::assertSame('2026-10-18 07:30:00', $type->convertToDatabaseValue($value, $platform), $name);
+            $type = $types->get($name);
+            foreach ([$paris, \DateTime::createFromImmutable($paris)] as $value) {
+                self::assertSame('2026-10-18 07:30:00', $type->convertToDatabaseValue($value, $platform), $name);
+            }
             $converted = $type->convertToPHPValue('2026-10-18 07:30:00', $platform);
             self::assertInstanceOf(\DateTimeImmutable::class, $converted, $name);
             self::assertSame('2026-10-18T07:30:00+00:00', $converted->format(\DATE_ATOM), $name);
         }
+    }
+
+    /** 4.0: the types go in a provider given to a connection, DBAL's static registry is left as DBAL has it. */
+    public function testTheProviderLeavesDbalsStaticRegistryAlone(): void
+    {
+        $static = (new Configuration())->getTypeProvider();
+        $types = Types::provider();
+
+        self::assertNotSame($static, $types);
+        self::assertInstanceOf(DateTimeType::class, $types->get('datetime'));
+        self::assertNotInstanceOf(DateTimeType::class, $static->get('datetime'));
+        self::assertFalse($static->has(UtcDateTimeImmutableType::NAME));
+    }
+
+    public function testTheTypesAreAddedToARegistryGivenAndAUtcTypeOfItsOwnIsKept(): void
+    {
+        $own = new class extends UtcDateTimeImmutableType {};
+        $registry = new TypeRegistry([UtcDateTimeImmutableType::NAME => $own]);
+
+        self::assertSame($registry, Types::provider($registry));
+        self::assertInstanceOf(DateTimeType::class, $registry->get('datetimetz'));
+        self::assertSame($own, $registry->get(UtcDateTimeImmutableType::NAME));
+        self::assertInstanceOf(UtcDateTimeType::class, $registry->get(UtcDateTimeType::NAME));
     }
 
     public function testAnUnreadableValueIsAConversionExceptionAsInDbal4(): void

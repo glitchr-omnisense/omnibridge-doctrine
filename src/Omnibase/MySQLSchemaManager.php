@@ -3,10 +3,8 @@
 namespace Omnibridge\Doctrine\Omnibase;
 
 use Base\Database\Type\MySQLSetType;
-use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\MySQLSchemaManager as DbalMySQLSchemaManager;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\TypeRegistry;
 
 /**
@@ -41,16 +39,14 @@ class MySQLSchemaManager extends DbalMySQLSchemaManager
 
         $set = strtolower((string) ($row['type'] ?? '')) === 'set';
         $values = $set ? self::values((string) ($row['column_type'] ?? '')) : $column->getValues();
-        if ($set) {
-            // DBAL's registry (Type's static methods are deprecated since DBAL 4.6): the type provider of a
-            // connection configured without one, Type::getTypeRegistry() before 4.6.
-            $configuration = new Configuration();
-            // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
-            $registry = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
-            \assert($registry instanceof TypeRegistry);
-            if (!$registry->has(MySQLSetType::NAME)) {
-                $registry->register(MySQLSetType::NAME, MySQLSetType::class);
+        $types = $this->connection->getConfiguration()->getTypeProvider();
+        if ($set && !$types->has(MySQLSetType::NAME)) {
+            // The SET type in the connection's own types (4.0: not in DBAL's static registry); a provider that
+            // cannot take it (not a TypeRegistry) is the host's, which declares it.
+            if (!$types instanceof TypeRegistry) {
+                throw new \LogicException(\sprintf('The connection\'s type provider has no "%s" type: register %s in it.', MySQLSetType::NAME, MySQLSetType::class));
             }
+            $types->register(MySQLSetType::NAME, MySQLSetType::class);
         }
 
         $comment = $column->getComment();
@@ -67,31 +63,16 @@ class MySQLSchemaManager extends DbalMySQLSchemaManager
             return $column;
         }
 
-        // The column made again by its editor where DBAL has it (4.5; its setters are deprecated there), with the
-        // connection's types as DBAL's own schema manager gives them; set in place before.
-        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.4, which composer.json still allows, has no column editor)
-        if (method_exists($column, 'edit')) {
-            $editor = $column->edit()->setComment($comment);
-            if ($set) {
-                $editor->setTypeName(MySQLSetType::NAME)->setValues($values);
-            }
-            $edited = $editor->create();
-            $configuration = $this->connection->getConfiguration();
-            // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.5, which composer.json still allows, has no type provider)
-            if (method_exists($configuration, 'getTypeProvider')) {
-                $edited->setTypeProvider($configuration->getTypeProvider());
-            }
-
-            return $edited;
-        }
-
+        // The column made again by its editor (DBAL 4.5; its setters are deprecated there), with the connection's
+        // types as DBAL's own schema manager gives them.
+        $editor = $column->edit()->setComment($comment);
         if ($set) {
-            $column->setType(Type::getType(MySQLSetType::NAME));
-            $column->setValues($values);
+            $editor->setTypeName(MySQLSetType::NAME)->setValues($values);
         }
-        $column->setComment($comment);
+        $edited = $editor->create();
+        $edited->setTypeProvider($types);
 
-        return $column;
+        return $edited;
     }
 
     /** @return list<string> the values of "set('a','b')" (or "enum(...)"), as DBAL reads an ENUM's */

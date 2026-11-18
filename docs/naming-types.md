@@ -33,15 +33,25 @@ $configuration->setNamingStrategy(new Omnibridge\Doctrine\NamingStrategy());
 
 ## Types
 
-`Types::register()` registers the DBAL types of omnibase's schema, as omnibase registers them
-(`BaseBundle::boot()`, `BaseExtension::prependDoctrineTypes()`); call it before any metadata is read
-(a field's type is asked while it is). `EntityManagers::create()` calls it.
+`Types::provider(?TypeRegistry $registry = null): TypeRegistry` puts the DBAL types of omnibase's schema
+in a type provider - `$registry`, or a new registry of DBAL's built-in types - and returns it, for the
+connection's configuration (4.0; DBAL's static registry, which `Type::addType()` and `overrideType()`
+change, is deprecated in DBAL 4.6 and gone in 5):
+
+```php
+$connection = DriverManager::getConnection($parameters, (new Doctrine\DBAL\Configuration())->setTypeProvider(Types::provider()));
+```
+
+Give it before any metadata is read (a field's type is asked while it is). `EntityManagers::create()`
+gives one to a connection that has none of its own. omnibase's types (the core's, the passkeys', the
+enumerations) are `Omnibase\Types::provider($types, $enumerations, $registry)`.
 
 | Type name | Class | Behaviour |
 |---|---|---|
-| `datetime`, `datetimetz` (overridden) | `Type\DateTimeType` (extends DBAL's `DateTimeType`) | written in UTC - the `\DateTime` given is moved to UTC in place (`setTimezone()` on the object itself) -, read as UTC; an unreadable value is DBAL 4's `InvalidFormat` (a `ConversionException`) |
-| `utc_datetime` | `Type\UtcDateTimeType` | a `\DateTime` written in UTC (a copy moved, the value given untouched), read in UTC by the platform's format, else by `date_create()`, else DBAL's own conversion |
-| `utc_datetime_immutable` | `Type\UtcDateTimeImmutableType` | the same with `\DateTimeImmutable` |
+| `datetime`, `datetimetz` (overridden) | `Type\DateTimeType` (extends DBAL's `DateTimeImmutableType`) | any `\DateTimeInterface` written in UTC (a copy moved, the value given untouched), read as a `\DateTimeImmutable` in UTC; an unreadable value is DBAL 4's `InvalidFormat` (a `ConversionException`) |
+| `datetime_immutable`, `datetimetz_immutable` (overridden) | `Type\UtcDateTimeImmutableType` | the same |
+| `utc_datetime` | `Type\UtcDateTimeType` | the same (read as a `\DateTimeImmutable` since 4.0: the mutable twin is gone with DBAL's mutable `DateTimeType`), read in UTC by the platform's format, else by `date_create_immutable()`, else DBAL's own conversion |
+| `utc_datetime_immutable` | `Type\UtcDateTimeImmutableType` | the same |
 
 The two `utc_*` types are added only when no type of that name exists, and are not final (omnibase's
 core extends them). `Type\Utc::zone()` is the shared `UTC` zone. Their `getName()` and
@@ -59,7 +69,9 @@ EntityManagers::create(
 ): Doctrine\ORM\EntityManager
 ```
 
-1. `Types::register()`.
+1. The connection's types: a connection configured without a provider of its own (DBAL's static
+   registry) is given `Types::provider()` - its platform too, when it was resolved already; a
+   `TypeRegistry` the host gave it is given the bridge's types; another provider is left as it is.
 2. `ORMSetup::createAttributeMetadataConfig($paths, $development, null, $cache ?? new ArrayAdapter())`:
    the attribute driver over the folders; without a cache the metadata are kept in memory for the
    process (ORMSetup's own default, outside development, looks for APCu, Memcached, then a Redis on

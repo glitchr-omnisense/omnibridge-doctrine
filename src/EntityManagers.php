@@ -2,7 +2,9 @@
 
 namespace Omnibridge\Doctrine;
 
+use Doctrine\DBAL\Configuration as DbalConfiguration;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Types\TypeRegistry;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
@@ -14,6 +16,11 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
  * has none of its own: attribute mapping of the given folders (in Doctrine's
  * or omnibase's vocabulary, through the DeclarationDriver), omnibase's
  * naming strategy and types, PHP's native lazy objects for proxies.
+ *
+ * The types are the connection's (4.0): a connection configured without a type
+ * provider of its own (DBAL's static registry, deprecated in DBAL 4.6, gone in
+ * 5) is given one, Types::provider(); a TypeRegistry the host gave it is given
+ * the bridge's types; any other provider is the host's, left as it is.
  *
  * Without a cache, the metadata is kept in memory for the request (an
  * ArrayAdapter): ORMSetup's own default, outside development, looks for APCu,
@@ -29,7 +36,7 @@ final class EntityManagers
      */
     public static function create(Connection $connection, array $paths, bool $development = false, ?CacheItemPoolInterface $cache = null, ?\Closure $configure = null): EntityManager
     {
-        Types::register();
+        self::types($connection);
 
         $configuration = ORMSetup::createAttributeMetadataConfig($paths, $development, null, $cache ?? new ArrayAdapter());
         $configuration->setNamingStrategy(new NamingStrategy());
@@ -47,5 +54,22 @@ final class EntityManagers
         }
 
         return new EntityManager($connection, $configuration);
+    }
+
+    private static function types(Connection $connection): void
+    {
+        $configuration = $connection->getConfiguration();
+        $provider = $configuration->getTypeProvider();
+        // A configuration's provider defaults to DBAL's static registry (no deprecation read so; DBAL 5 has none).
+        if ($provider === (new DbalConfiguration())->getTypeProvider()) {
+            $configuration->setTypeProvider($provider = Types::provider());
+            // A platform already resolved (the connection used, or its server version given) took the provider then.
+            $parameters = $connection->getParams();
+            if ($connection->isConnected() || isset($parameters['serverVersion']) || isset($parameters['primary']['serverVersion'])) {
+                $connection->getDatabasePlatform()->setTypeProvider($provider);
+            }
+        } elseif ($provider instanceof TypeRegistry) {
+            Types::provider($provider);
+        }
     }
 }

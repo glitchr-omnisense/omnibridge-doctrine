@@ -23,6 +23,7 @@ use Base\EntitySubscriber\VersionableSubscriber;
 use Base\Service\ArrayParameterBag;
 use Base\Service\LocalizerInterface;
 use Base\Service\Model\ClassAliases;
+use Doctrine\DBAL\Types\TypeRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Events;
@@ -104,10 +105,16 @@ final class Mapping
         // App\Entity\X is Base\Entity\X where the application has none of its own: associations name them.
         ClassAliases::register();
 
-        Types::register($options['types'] ?? [], array_merge(
+        // The column types in the connection's type provider (omnibridge/doctrine 4.0: not in DBAL's static registry),
+        // the one EntityManagers::create() gave it or the host's own registry.
+        $provider = $entityManager->getConnection()->getConfiguration()->getTypeProvider();
+        if (!$provider instanceof TypeRegistry) {
+            throw new \LogicException(\sprintf('omnibase\'s column types go in the connection\'s type provider: a %s is given, build it with %s::provider().', get_debug_type($provider), Types::class));
+        }
+        Types::provider($options['types'] ?? [], Types::enumerations(array_merge(
             [Types::coreEnumerationDirectory(), $projectDir.'/src/Enum'],
             $options['enumerations'] ?? []
-        ));
+        )), $provider);
 
         $parameters = ['base.attributes.use_custom' => true, 'base.database.use_custom' => true];
         foreach (array_values(array_merge([$projectDir.'/src/Attribute'], $options['attribute_paths'] ?? [])) as $i => $path) {

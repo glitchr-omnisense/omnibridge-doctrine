@@ -2,45 +2,52 @@
 
 namespace Omnibridge\Doctrine;
 
-use Doctrine\DBAL\Configuration;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\TypeRegistry;
 use Omnibridge\Doctrine\Type\DateTimeType;
 use Omnibridge\Doctrine\Type\UtcDateTimeImmutableType;
 use Omnibridge\Doctrine\Type\UtcDateTimeType;
 
 /**
- * The DBAL types of omnibase's schema, registered as omnibase registers them
- * (BaseBundle::boot(), BaseExtension::prependDoctrineTypes()): datetime,
- * datetimetz and their immutable twins written and read in UTC, utc_datetime and utc_datetime_immutable.
- * Before any metadata is read: a field's type is asked while it is.
+ * The DBAL types of omnibase's schema: datetime, datetimetz and their immutable twins written and read in UTC,
+ * utc_datetime and utc_datetime_immutable - in a type provider given to the connection's configuration
+ * (Doctrine\DBAL\Configuration::setTypeProvider()), never in DBAL's static registry (deprecated in DBAL 4.6, gone in 5).
+ *
+ *     $connection = DriverManager::getConnection($parameters, (new Configuration())->setTypeProvider(Types::provider()));
+ *
+ * EntityManagers::create() gives one to a connection configured without types of its own. Before any metadata is
+ * read: a field's type is asked while it is.
  */
 final class Types
 {
-    public static function register(): void
-    {
-        $registry = self::registry();
-        $registry->override('datetime', DateTimeType::class);
-        $registry->override('datetimetz', DateTimeType::class);
-        $registry->override('datetime_immutable', UtcDateTimeImmutableType::class);
-        $registry->override('datetimetz_immutable', UtcDateTimeImmutableType::class);
-        foreach ([UtcDateTimeType::NAME => UtcDateTimeType::class, UtcDateTimeImmutableType::NAME => UtcDateTimeImmutableType::class] as $name => $class) {
-            if (!$registry->has($name)) {
-                $registry->register($name, $class);
-            }
-        }
-    }
+    /** Over DBAL's types of these names. */
+    private const OVERRIDES = [
+        'datetime' => DateTimeType::class,
+        'datetimetz' => DateTimeType::class,
+        'datetime_immutable' => UtcDateTimeImmutableType::class,
+        'datetimetz_immutable' => UtcDateTimeImmutableType::class,
+    ];
+
+    /** Beside them, where no type has the name yet (omnibase's own Base\Database\Type\Utc* are kept). */
+    private const ADDED = [
+        UtcDateTimeType::NAME => UtcDateTimeType::class,
+        UtcDateTimeImmutableType::NAME => UtcDateTimeImmutableType::class,
+    ];
 
     /**
-     * DBAL's registry, the one Type's static methods change (deprecated since DBAL 4.6): the type provider of a
-     * connection configured without one (Configuration::getTypeProvider()), Type::getTypeRegistry() before 4.6.
+     * The bridge's types in $registry (a registry of DBAL's built-in types when none is given), which is returned:
+     * the type provider of a connection.
      */
-    private static function registry(): TypeRegistry
+    public static function provider(?TypeRegistry $registry = null): TypeRegistry
     {
-        $configuration = new Configuration();
-        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
-        $registry = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
-        \assert($registry instanceof TypeRegistry);
+        $registry ??= new TypeRegistry();
+        foreach (self::OVERRIDES as $name => $className) {
+            $registry->override($name, $className);
+        }
+        foreach (self::ADDED as $name => $className) {
+            if (!$registry->has($name)) {
+                $registry->register($name, $className);
+            }
+        }
 
         return $registry;
     }

@@ -47,6 +47,32 @@ final class EntityManagersTest extends TestCase
         self::assertSame('2026-10-05 05:02 UTC', $read->updatedAt->format('Y-m-d H:i T'));
     }
 
+    /** 4.0: the types are the connection's, DBAL's static registry is left alone. */
+    public function testAConnectionWithoutTypesOfItsOwnIsGivenTheBridgesProvider(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $connection->executeQuery('SELECT 1');   // the platform resolved already: it is given the provider too
+        $static = (new \Doctrine\DBAL\Configuration())->getTypeProvider();
+        EntityManagers::create($connection, [__DIR__.'/Fixtures/Entity']);
+
+        $types = $connection->getConfiguration()->getTypeProvider();
+        self::assertNotSame($static, $types);
+        self::assertInstanceOf(\Omnibridge\Doctrine\Type\DateTimeType::class, $types->get('datetime'));
+        self::assertNotInstanceOf(\Omnibridge\Doctrine\Type\DateTimeType::class, $static->get('datetime'));
+        self::assertTrue($connection->getDatabasePlatform()->hasDoctrineTypeMappingFor('datetime'));
+        self::assertSame($types, \Closure::bind(fn () => $this->typeProvider, $connection->getDatabasePlatform(), \Doctrine\DBAL\Platforms\AbstractPlatform::class)(), 'the platform resolved before is given it');
+    }
+
+    public function testATypeRegistryOfTheHostIsGivenTheBridgesTypes(): void
+    {
+        $registry = new \Doctrine\DBAL\Types\TypeRegistry();
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], (new \Doctrine\DBAL\Configuration())->setTypeProvider($registry));
+        EntityManagers::create($connection, [__DIR__.'/Fixtures/Entity']);
+
+        self::assertSame($registry, $connection->getConfiguration()->getTypeProvider());
+        self::assertInstanceOf(\Omnibridge\Doctrine\Type\UtcDateTimeImmutableType::class, $registry->get('utc_datetime_immutable'));
+    }
+
     public function testWithoutACacheTheMetadataIsKeptInMemoryNotLookedForOnARedis(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);

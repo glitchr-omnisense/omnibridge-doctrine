@@ -11,7 +11,7 @@
     "require": {
         "php": ">=8.2",
         "beberlei/doctrineextensions": "^1.0",
-        "doctrine/dbal": "^4.2",
+        "doctrine/dbal": "^4.6",
         "doctrine/orm": "^3.8",
         "doctrine/orm-plugin-second-level-cache": "^1.0",
         "omnisense/omnibridge": "^2.0",
