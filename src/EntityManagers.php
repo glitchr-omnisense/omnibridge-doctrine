@@ -15,7 +15,8 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
  * An entity manager over an omnibase site's database, for a framework that
  * has none of its own: attribute mapping of the given folders (in Doctrine's
  * or omnibase's vocabulary, through the DeclarationDriver), omnibase's
- * naming strategy and types, PHP's native lazy objects for proxies.
+ * naming strategy and types, PHP's native lazy objects for proxies, doctrine/orm
+ * 3.8's schema editor API.
  *
  * The types are the connection's (4.0): a connection configured without a type
  * provider of its own (DBAL's static registry, deprecated in DBAL 4.6, gone in
@@ -40,6 +41,8 @@ final class EntityManagers
 
         $configuration = ORMSetup::createAttributeMetadataConfig($paths, $development, null, $cache ?? new ArrayAdapter());
         $configuration->setNamingStrategy(new NamingStrategy());
+        // doctrine/orm 3.8's schema editor API (the schema tool on DBAL's editors; off is deprecated, and gone in ORM 4).
+        $configuration->setUseSchemaEditorApi(true);
         if (method_exists($configuration, 'enableNativeLazyObjects') && \PHP_VERSION_ID >= 80400) {
             $configuration->enableNativeLazyObjects(true);
         }

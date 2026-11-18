@@ -93,6 +93,7 @@ final class EntityManagersTest extends TestCase
         });
 
         self::assertInstanceOf(\Omnibridge\Doctrine\NamingStrategy::class, $seen, 'after omnibase\'s own settings');
+        self::assertTrue($entityManager->getConfiguration()->getUseSchemaEditorApi(), 'doctrine/orm 3.8\'s schema editor API');
         self::assertSame($factory, $entityManager->getConfiguration()->getRepositoryFactory());
     }
 

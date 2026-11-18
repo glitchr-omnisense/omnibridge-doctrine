@@ -50,7 +50,9 @@ final class GeneratorsAndColumnOptionsTest extends TestCase
         if (!method_exists(Schema::class, 'edit')) {
             self::markTestSkipped('the schema editor API comes with doctrine/dbal 4.5');
         }
-        $entityManager = EntityManagers::create(DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]), [self::FIXTURES], true);
+        // A host that leaves the schema editor API off (DoctrineBundle has no option for it); EntityManagers::create()
+        // turns it on (4.0), the host's configure: may turn it off again.
+        $entityManager = EntityManagers::create(DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]), [self::FIXTURES], true, configure: static fn (\Doctrine\ORM\Configuration $configuration) => $configuration->setUseSchemaEditorApi(false));
         self::assertFalse($entityManager->getConfiguration()->getUseSchemaEditorApi(), 'the host\'s configuration, left as it is');
 
         Deprecation::enableTrackingDeprecations();

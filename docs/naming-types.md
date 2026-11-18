@@ -76,7 +76,8 @@ EntityManagers::create(
    the attribute driver over the folders; without a cache the metadata are kept in memory for the
    process (ORMSetup's own default, outside development, looks for APCu, Memcached, then a Redis on
    127.0.0.1).
-3. `setNamingStrategy(new NamingStrategy())`.
+3. `setNamingStrategy(new NamingStrategy())`, and `setUseSchemaEditorApi(true)` (4.0: doctrine/orm 3.8's
+   schema tool on DBAL's editors; leaving it off is deprecated there, impossible in ORM 4).
 4. `enableNativeLazyObjects(true)` on PHP 8.4 and later, when the configuration has the method.
 5. `$configure($configuration)`: what can no longer change once the entity manager exists - a
    repository factory, filters, DQL functions, the driver wrapped in a `DeclarationDriver`.
