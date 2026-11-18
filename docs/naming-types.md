@@ -81,4 +81,7 @@ EntityManagers::create(
 4. `enableNativeLazyObjects(true)` on PHP 8.4 and later, when the configuration has the method.
 5. `$configure($configuration)`: what can no longer change once the entity manager exists - a
    repository factory, filters, DQL functions, the driver wrapped in a `DeclarationDriver`.
-6. `new EntityManager($connection, $configuration)`.
+6. `new EntityManager($connection, $configuration)`, with `ForeignKeyNames` listening to
+   `ToolEvents::postGenerateSchema` (4.0): a foreign key the schema editor API leaves unnamed is given the
+   name the SchemaTool gave before (`FK_` and the CRC32 of the table's and columns' names), the one every
+   site's migrations wrote - MySQL would otherwise name a new key `<table>_ibfk_<n>`.

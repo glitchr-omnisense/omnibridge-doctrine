@@ -382,7 +382,7 @@ final class MetadataDescription
     /** @param list<string> $columns */
     private static function foreignKeyName(string $table, array $columns, int $length): string
     {
-        return strtoupper(substr('fk_'.implode('', array_map(static fn (string $name): string => dechex(crc32($name)), [$table, ...$columns])), 0, $length));
+        return ForeignKeyNames::name($table, $columns, $length);
     }
 
     /** A table's name as getName() gave it: the qualifier's value and a dot before the name's. */

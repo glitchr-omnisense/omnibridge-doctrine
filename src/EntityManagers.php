@@ -8,6 +8,7 @@ use Doctrine\DBAL\Types\TypeRegistry;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
+use Doctrine\ORM\Tools\ToolEvents;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
@@ -56,7 +57,11 @@ final class EntityManagers
             $configuration->setMetadataDriverImpl(new DeclarationDriver($driver));
         }
 
-        return new EntityManager($connection, $configuration);
+        $entityManager = new EntityManager($connection, $configuration);
+        // The foreign keys' names of before the schema editor API (FK_ and a CRC32): the sites' migrations wrote them.
+        $entityManager->getEventManager()->addEventListener(ToolEvents::postGenerateSchema, new ForeignKeyNames());
+
+        return $entityManager;
     }
 
     private static function types(Connection $connection): void
