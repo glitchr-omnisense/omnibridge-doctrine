@@ -3,9 +3,11 @@
 namespace Omnibridge\Doctrine\Omnibase;
 
 use Base\Database\Type\MySQLSetType;
+use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\MySQLSchemaManager as DbalMySQLSchemaManager;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\TypeRegistry;
 
 /**
  * DBAL's MySQL schema manager, with two things a column read back from the
@@ -37,25 +39,57 @@ class MySQLSchemaManager extends DbalMySQLSchemaManager
         $column = parent::_getPortableTableColumnDefinition($tableColumn);
         $row = array_change_key_case($tableColumn, CASE_LOWER);
 
-        if (strtolower((string) ($row['type'] ?? '')) === 'set') {
-            if (!Type::hasType(MySQLSetType::NAME)) {
-                Type::addType(MySQLSetType::NAME, MySQLSetType::class);
+        $set = strtolower((string) ($row['type'] ?? '')) === 'set';
+        $values = $set ? self::values((string) ($row['column_type'] ?? '')) : $column->getValues();
+        if ($set) {
+            // DBAL's registry (Type's static methods are deprecated since DBAL 4.6): the type provider of a
+            // connection configured without one, Type::getTypeRegistry() before 4.6.
+            $configuration = new Configuration();
+            // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
+            $registry = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
+            \assert($registry instanceof TypeRegistry);
+            if (!$registry->has(MySQLSetType::NAME)) {
+                $registry->register(MySQLSetType::NAME, MySQLSetType::class);
             }
-
-            $column->setType(Type::getType(MySQLSetType::NAME));
-            $column->setValues(self::values((string) ($row['column_type'] ?? '')));
         }
 
         $comment = $column->getComment();
-        if ($comment !== '' && preg_match(self::LEGACY_TYPE_COMMENT, $comment) === 1) {
-            $rest = trim((string) preg_replace(self::LEGACY_TYPE_COMMENT, '', $comment));
+        $legacy = $comment !== '' && preg_match(self::LEGACY_TYPE_COMMENT, $comment) === 1;
+        if ($legacy) {
+            $comment = trim((string) preg_replace(self::LEGACY_TYPE_COMMENT, '', $comment));
             // The values EnumSubscriber wrote after the type: the column's own, in the same ALTER.
-            if ($column->getValues() !== [] && self::sameValues(explode(',', $rest), $column->getValues())) {
-                $rest = '';
+            if ($values !== [] && self::sameValues(explode(',', $comment), $values)) {
+                $comment = '';
+            }
+        }
+
+        if (!$set && !$legacy) {
+            return $column;
+        }
+
+        // The column made again by its editor where DBAL has it (4.5; its setters are deprecated there), with the
+        // connection's types as DBAL's own schema manager gives them; set in place before.
+        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.4, which composer.json still allows, has no column editor)
+        if (method_exists($column, 'edit')) {
+            $editor = $column->edit()->setComment($comment);
+            if ($set) {
+                $editor->setTypeName(MySQLSetType::NAME)->setValues($values);
+            }
+            $edited = $editor->create();
+            $configuration = $this->connection->getConfiguration();
+            // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.5, which composer.json still allows, has no type provider)
+            if (method_exists($configuration, 'getTypeProvider')) {
+                $edited->setTypeProvider($configuration->getTypeProvider());
             }
 
-            $column->setComment($rest);
+            return $edited;
         }
+
+        if ($set) {
+            $column->setType(Type::getType(MySQLSetType::NAME));
+            $column->setValues($values);
+        }
+        $column->setComment($comment);
 
         return $column;
     }

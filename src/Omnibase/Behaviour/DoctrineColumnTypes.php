@@ -22,11 +22,19 @@ final class DoctrineColumnTypes implements ColumnTypes
 
     public function isArray(string $type): bool
     {
-        if ('' === $type || !Type::hasType($type)) {
+        if ('' === $type) {
+            return false;
+        }
+        // The connection's types (Type::hasType() and Type::getType() are deprecated since DBAL 4.6), DBAL's
+        // registry before 4.6: the same unless the host gave the connection a type provider of its own.
+        $configuration = $this->unitOfWork->entityManager()->getConnection()->getConfiguration();
+        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
+        $types = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
+        if (!$types->has($type)) {
             return false;
         }
 
-        $doctrineType = Type::getType($type);
+        $doctrineType = $types->get($type);
         if ($doctrineType instanceof EnumTypeAdapter) {
             return is_a($doctrineType->enumeration(), SetType::class, true);
         }

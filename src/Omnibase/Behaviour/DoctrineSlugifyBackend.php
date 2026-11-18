@@ -43,9 +43,24 @@ final class DoctrineSlugifyBackend implements SlugifyBackend
             }
 
             self::$uniqueAlone[$key] = false;
-            foreach ($entityManager->getConnection()->createSchemaManager()->listTableIndexes($table) as $index) {
-                if ($index->isUnique() && !$index->isPrimary() && array_map('strtolower', $index->getUnquotedColumns()) === [strtolower($column)]) {
-                    self::$uniqueAlone[$key] = true;
+            $indexes = $entityManager->getConnection()->createSchemaManager()->listTableIndexes($table);
+            // By the indexed columns and the index type where DBAL has them (isUnique(), isPrimary() and
+            // getUnquotedColumns() are deprecated since DBAL 4.5): the primary key, which DBAL still lists among the
+            // indexes, is the unique index on the identifier's columns, never the slug's alone.
+            // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2, which composer.json still allows, has no indexed columns)
+            if (method_exists(\Doctrine\DBAL\Schema\Index::class, 'getIndexedColumns')) {
+                $identifier = array_map('strtolower', $classMetadata->getIdentifierColumnNames());
+                foreach ($indexes as $index) {
+                    $columns = array_map(static fn ($indexed): string => strtolower($indexed->getColumnName()->getIdentifier()->getValue()), $index->getIndexedColumns());
+                    if (\Doctrine\DBAL\Schema\Index\IndexType::UNIQUE === $index->getType() && $columns !== $identifier && $columns === [strtolower($column)]) {
+                        self::$uniqueAlone[$key] = true;
+                    }
+                }
+            } else {
+                foreach ($indexes as $index) {
+                    if ($index->isUnique() && !$index->isPrimary() && array_map('strtolower', $index->getUnquotedColumns()) === [strtolower($column)]) {
+                        self::$uniqueAlone[$key] = true;
+                    }
                 }
             }
 

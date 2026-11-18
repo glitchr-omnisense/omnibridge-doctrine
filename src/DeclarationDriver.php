@@ -546,7 +546,7 @@ final class DeclarationDriver implements MappingDriver
             $mapping['fetch'] = self::fetchMode($className, $oneToMany->fetch);
 
             if (isset($attributes[Mapping\OrderBy::class])) {
-                $mapping['orderBy'] = $attributes[Mapping\OrderBy::class]->value;
+                $mapping['orderBy'] = self::orderBy($attributes[Mapping\OrderBy::class]->value);
             }
 
             $metadata->mapOneToMany($mapping);
@@ -617,7 +617,7 @@ final class DeclarationDriver implements MappingDriver
             $mapping['fetch'] = self::fetchMode($className, $manyToMany->fetch);
 
             if (isset($attributes[Mapping\OrderBy::class])) {
-                $mapping['orderBy'] = $attributes[Mapping\OrderBy::class]->value;
+                $mapping['orderBy'] = self::orderBy($attributes[Mapping\OrderBy::class]->value);
             }
 
             $metadata->mapManyToMany($mapping);
@@ -798,5 +798,20 @@ final class DeclarationDriver implements MappingDriver
         }
 
         return $mapping;
+    }
+
+    /**
+     * An #[OrderBy]'s directions as the SortDirection doctrine/orm 3.8 asks for ("ASC" and "DESC" are deprecated
+     * there), read as ClassMetadata reads them; any other is left to it, which refuses it as before.
+     *
+     * @return mixed the #[OrderBy]'s value, its directions read
+     */
+    private static function orderBy(mixed $orderBy): mixed
+    {
+        return !\is_array($orderBy) ? $orderBy : array_map(static fn (mixed $direction): mixed => \is_string($direction) ? match (strtoupper($direction)) {
+            'ASC' => \SortDirection::Ascending,
+            'DESC' => \SortDirection::Descending,
+            default => $direction,
+        } : $direction, $orderBy);
     }
 }

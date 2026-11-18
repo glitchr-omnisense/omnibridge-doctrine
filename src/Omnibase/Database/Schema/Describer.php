@@ -92,10 +92,16 @@ final class Describer
                 $sql[$name] = static fn (Column $column) => MySqlSchema::enumeration(new Column($column->name, $name, values: array_values($className::getPermittedValues())));
             } elseif (is_subclass_of($className, Type::class) && !str_starts_with($className, 'Doctrine\\')) {
                 $sql[$name] = static function (Column $column) use ($name, $className): string {
-                    if (!Type::hasType($name)) {
-                        Type::addType($name, $className);
+                    // DBAL's registry (Type's static methods are deprecated since DBAL 4.6): the type provider of a
+                    // connection configured without one, Type::getTypeRegistry() before 4.6.
+                    $configuration = new \Doctrine\DBAL\Configuration();
+                    // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
+                    $registry = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
+                    \assert($registry instanceof \Doctrine\DBAL\Types\TypeRegistry);
+                    if (!$registry->has($name)) {
+                        $registry->register($name, $className);
                     }
-                    $declaration = Type::getType($name)->getSQLDeclaration(array_filter([
+                    $declaration = $registry->get($name)->getSQLDeclaration(array_filter([
                         'length' => $column->length, 'precision' => $column->precision, 'scale' => $column->scale,
                         'fixed' => $column->fixed, 'unsigned' => $column->unsigned, 'notnull' => !$column->nullable,
                     ], static fn ($value) => null !== $value), new MySQLPlatform());

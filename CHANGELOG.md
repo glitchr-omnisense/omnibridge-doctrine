@@ -1,5 +1,33 @@
 # Changelog
 
+## 3.0.4
+
+doctrine/dbal 4.5 and 4.6's deprecations out of the bridge, no public signature changed:
+- DBAL's types: `Types::register()` (both), the MySQL schema manager and the describer register and override in DBAL's
+  registry itself, reached as the type provider of a connection configured without one
+  (`Configuration::getTypeProvider()`; `Type::overrideType()`, `addType()`, `hasType()`, `getTypeRegistry()` are
+  deprecated in 4.6). Where an entity manager is at hand (the finder's converted types, the column types,
+  `ClassMetadataManipulator::getDoctrineType()`, `MetadataSnapshot`) the types are its connection's: the same registry
+  unless the host gave the connection a type provider of its own. Before DBAL 4.6, `Type::getTypeRegistry()` as before.
+- `MetadataDescription` reads the tables through the object names, the indexed columns and index type, the primary key
+  constraint, the foreign keys' referencing and referenced names and the column's type name (`Column::getTypeName()`),
+  where DBAL has them; the names are the same (an object's name as `getName()` gave it, the columns as given to the
+  index or the key) - the getters of before on DBAL 4.2, or for a table DBAL says it cannot read (`InvalidState`). The
+  primary key, still among DBAL's indexes, is the unique index on its columns. `$values` is given the column's type
+  from the connection's types (DBAL's registry for `MetadataDescription::table()`).
+- The order directions: `DeclarationDriver` gives an `#[OrderBy]`'s "ASC" and "DESC" to Doctrine as `SortDirection`,
+  and the finder's ORDER BY passes `SortDirection` to the query builder (doctrine/orm 3.8 deprecates the strings); any
+  other value is left to Doctrine, which refuses it as before. The same metadata, the same DQL.
+- The MySQL schema manager makes a SET column, or one with a "(DC2Type:...)" comment, again by DBAL's column editor
+  (4.5; the column's setters are deprecated there), with the connection's types; set in place before 4.5.
+- The slug's "unique alone" check reads the indexed columns and the index type; the primary key is the unique index on
+  the identifier's columns.
+
+Left for 4.0 (a public change each): the bridge's `datetime` and `datetimetz` (`Type\DateTimeType`) extend DBAL's
+mutable `DateTimeType`, deprecated in DBAL 4.6 for `DateTimeImmutableType`; `Types::register()` changes DBAL's static
+registry, which DBAL 5 removes (a type provider given to the connection's configuration instead);
+`EntityManagers::create()` leaves doctrine/orm 3.8's schema editor API off.
+
 ## 3.0.3
 
 doctrine/orm 3.8's deprecations out of the bridge, no public signature changed:

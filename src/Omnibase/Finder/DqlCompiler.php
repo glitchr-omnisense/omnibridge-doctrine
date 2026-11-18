@@ -686,7 +686,13 @@ class DqlCompiler implements Subject
 
         $type = $this->classMetadata->getTypeOfField($fieldHead);
 
-        return \is_string($type) && Type::hasType($type) && Type::getType($type) instanceof ConvertedInCriteria ? $type : null;
+        // The connection's types (Type::hasType() and Type::getType() are deprecated since DBAL 4.6), DBAL's
+        // registry before 4.6: the same unless the host gave the connection a type provider of its own.
+        $configuration = $this->entityManager->getConnection()->getConfiguration();
+        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
+        $types = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
+
+        return \is_string($type) && $types->has($type) && $types->get($type) instanceof ConvertedInCriteria ? $type : null;
     }
 
     /**
@@ -1933,7 +1939,14 @@ class DqlCompiler implements Subject
             } elseif (is_array($value)) {
                 $queryBuilder->add($orderBy, "FIELD(" . $formattedName . "," . implode(",", $value) . ")");
             } else {
-                $queryBuilder->$orderBy($formattedName, $value);
+                // The direction as the SortDirection doctrine/orm 3.8 asks for (a string is deprecated there),
+                // read as QueryBuilder read it; anything else is left to it, which refuses it as before.
+                $direction = null === $value ? \SortDirection::Ascending : (\is_string($value) ? match (strtolower($value)) {
+                    'asc' => \SortDirection::Ascending,
+                    'desc' => \SortDirection::Descending,
+                    default => $value,
+                } : $value);
+                $queryBuilder->$orderBy($formattedName, $direction);
             }
 
             $first = false;

@@ -10,7 +10,9 @@ use Base\Database\Type\Passkey;
 use Base\Database\Type\UtcDateTimeImmutableType;
 use Base\Database\Type\UtcDateTimeType;
 use Base\Service\Model\ClassFinder;
+use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\TypeRegistry;
 
 /**
  * omnibase's column types, registered with DBAL (plan "omnibase agnostique",
@@ -89,6 +91,7 @@ final class Types
      */
     public static function register(array $types = [], array $enumerationDirectories = []): void
     {
+        $registry = self::registry();
         $enumerations = [];
         foreach (self::core() + $types as $name => $className) {
             // A bundle's enumerations given by name (doctrine.dbal.types of before) replace a type as a type does.
@@ -96,7 +99,7 @@ final class Types
                 $enumerations[$name] = $className;
                 continue;
             }
-            Type::hasType($name) ? Type::overrideType($name, $className) : Type::addType($name, $className);
+            $registry->has($name) ? $registry->override($name, $className) : $registry->register($name, $className);
         }
         self::registerEnumerations($enumerations, true);
 
@@ -111,7 +114,7 @@ final class Types
      */
     public static function registerEnumerations(array $enumerations, bool $override = false): void
     {
-        $registry = Type::getTypeRegistry();
+        $registry = self::registry();
         foreach ($enumerations as $name => $className) {
             if ($registry->has($name)) {
                 $current = $registry->get($name);
@@ -127,6 +130,20 @@ final class Types
             }
             Enumerations::register($name, $className);
         }
+    }
+
+    /**
+     * DBAL's registry, the one Type's static methods change (deprecated since DBAL 4.6): the type provider of a
+     * connection configured without one (Configuration::getTypeProvider()), Type::getTypeRegistry() before 4.6.
+     */
+    private static function registry(): TypeRegistry
+    {
+        $configuration = new Configuration();
+        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
+        $registry = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : Type::getTypeRegistry();
+        \assert($registry instanceof TypeRegistry);
+
+        return $registry;
     }
 
     /** The core's own enumerations (src/Enum). */

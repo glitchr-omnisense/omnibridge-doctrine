@@ -2,13 +2,20 @@
 
 namespace Omnibridge\Doctrine;
 
+use Doctrine\DBAL\Configuration as DbalConfiguration;
+use Doctrine\DBAL\Schema\AbstractAsset;
 use Doctrine\DBAL\Schema\Column as SchemaColumn;
 use Doctrine\DBAL\Schema\Exception\InvalidState;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index as SchemaIndex;
+use Doctrine\DBAL\Schema\Index\IndexedColumn;
+use Doctrine\DBAL\Schema\Index\IndexType;
+use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table as SchemaTable;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\TypeProvider;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Decorator\EntityManagerDecorator;
 use Doctrine\ORM\EntityManagerInterface;
@@ -80,9 +87,14 @@ final class MetadataDescription
         }
 
         $tables = [];
-        $length = $entityManager->getConnection()->getDatabasePlatform()->getMaxIdentifierLength();
+        $connection = $entityManager->getConnection();
+        $length = $connection->getDatabasePlatform()->getMaxIdentifierLength();
+        $configuration = $connection->getConfiguration();
+        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type provider)
+        $types = method_exists($configuration, 'getTypeProvider') ? $configuration->getTypeProvider() : null;
         foreach (self::schemaTool($entityManager)->getSchemaFromMetadata($metadata)->getTables() as $table) {
-            $tables[$table->getName()] = self::describe($table, $values, $length);
+            $description = self::describe($table, $values, $length, $types);
+            $tables[$description->name] = $description;
         }
         ksort($tables);
 
@@ -228,7 +240,7 @@ final class MetadataDescription
     /** @param (\Closure(Type): ?list<string>)|null $values */
     public static function table(SchemaTable $table, ?\Closure $values = null): Table
     {
-        return self::describe($table, $values, null);
+        return self::describe($table, $values, null, null);
     }
 
     /**
@@ -236,13 +248,107 @@ final class MetadataDescription
      * (Table::_generateIdentifierName(), "FK_" and the CRC32 of the table's and the local columns' names, cut to
      * the platform's identifier length): the name the SchemaTool without that API gave, and gives on sites.
      *
+     * Read through the object names, the indexed columns, the primary key constraint and the column's type name
+     * where DBAL has them (the getters of before are deprecated since DBAL 4.5 and 4.6), with the same names: a
+     * name as getName() gave it (the identifier's value, its qualifier's before it), the columns of an index or a key
+     * as given to it (Name::toString(), what the schema editor API gives them). A table those can not read (DBAL
+     * says so with InvalidState) is read with the getters of before, as on DBAL 4.2.
+     *
      * @param (\Closure(Type): ?list<string>)|null $values
      */
-    private static function describe(SchemaTable $table, ?\Closure $values, ?int $length): Table
+    private static function describe(SchemaTable $table, ?\Closure $values, ?int $length, ?TypeProvider $types): Table
+    {
+        // DBAL 4.2, which composer.json still allows, has none of these.
+        // @phpstan-ignore function.alreadyNarrowedType
+        $objects = method_exists($table, 'getObjectName')
+            // @phpstan-ignore function.alreadyNarrowedType
+            && method_exists($table, 'getPrimaryKeyConstraint')
+            // @phpstan-ignore function.alreadyNarrowedType
+            && method_exists(SchemaIndex::class, 'getIndexedColumns')
+            // @phpstan-ignore function.alreadyNarrowedType
+            && method_exists(ForeignKeyConstraint::class, 'getReferencingColumnNames');
+        if ($objects) {
+            try {
+                return self::describeObjects($table, $values, $length, $types);
+            } catch (InvalidState) {
+            }
+        }
+
+        return self::describeAssets($table, $values, $length);
+    }
+
+    /** @param (\Closure(Type): ?list<string>)|null $values */
+    private static function describeObjects(SchemaTable $table, ?\Closure $values, ?int $length, ?TypeProvider $types): Table
+    {
+        $tableName = self::qualified($table->getObjectName());
+
+        $columns = [];
+        foreach ($table->getColumns() as $column) {
+            $name = self::name($column);
+            $columns[$name] = self::column($name, $column, $values, $types);
+        }
+
+        $primaryKey = $table->getPrimaryKeyConstraint();
+        $primaryColumns = null === $primaryKey ? [] : self::names($primaryKey->getColumnNames());
+        // The primary key is one of the table's indexes still (until DBAL 5): the unique one on its columns, named
+        // "primary" where it was given no name (all the SchemaTool's), else that index's own name.
+        $primaryIndexes = [];
+        foreach ($table->getIndexes() as $key => $index) {
+            if (null !== $primaryKey && IndexType::UNIQUE === $index->getType() && self::indexed($index) === $primaryColumns) {
+                $primaryIndexes[] = $key;
+            }
+        }
+        $primaryIndex = \in_array('primary', $primaryIndexes, true) ? 'primary' : ($primaryIndexes[0] ?? null);
+
+        $indexes = [];
+        foreach ($table->getIndexes() as $key => $index) {
+            if ($key === $primaryIndex) {
+                continue;
+            }
+            $flags = match ($index->getType()) {
+                IndexType::FULLTEXT => ['fulltext'],
+                IndexType::SPATIAL => ['spatial'],
+                default => [],
+            };
+            if ($index->isClustered()) {
+                $flags[] = 'clustered';
+            }
+            $name = self::name($index);
+            $indexes[$name] = new Index($name, self::indexed($index), IndexType::UNIQUE === $index->getType(), $flags);
+        }
+        ksort($indexes);
+
+        $foreignKeys = [];
+        foreach ($table->getForeignKeys() as $foreignKey) {
+            $name = self::name($foreignKey);
+            $local = self::names($foreignKey->getReferencingColumnNames());
+            if ('' === $name && null !== $length) {
+                $name = self::foreignKeyName($tableName, $local, $length);
+            }
+            $foreignKeys[$name] = new ForeignKey(
+                $name,
+                $local,
+                self::qualified($foreignKey->getReferencedTableName()),
+                self::names($foreignKey->getReferencedColumnNames()),
+                self::action($foreignKey, 'onDelete'),
+                self::action($foreignKey, 'onUpdate'),
+            );
+        }
+        ksort($foreignKeys);
+
+        return new Table($tableName, $columns, $primaryColumns, $indexes, $foreignKeys);
+    }
+
+    /**
+     * The table read with the getters of before (DBAL 4.2, a table the object names can not read).
+     *
+     * @param (\Closure(Type): ?list<string>)|null $values
+     */
+    private static function describeAssets(SchemaTable $table, ?\Closure $values, ?int $length): Table
     {
         $columns = [];
         foreach ($table->getColumns() as $column) {
-            $columns[$column->getName()] = self::column($column, $values);
+            $columns[$column->getName()] = self::column($column->getName(), $column, $values, null);
         }
 
         $indexes = [];
@@ -257,25 +363,84 @@ final class MetadataDescription
         foreach ($table->getForeignKeys() as $foreignKey) {
             $name = $foreignKey->getName();
             if ('' === $name && null !== $length) {
-                $name = strtoupper(substr('fk_'.implode('', array_map(static fn (string $name): string => dechex(crc32($name)), [$table->getName(), ...$foreignKey->getLocalColumns()])), 0, $length));
+                $name = self::foreignKeyName($table->getName(), $foreignKey->getLocalColumns(), $length);
             }
-            $foreignKeys[$name] = self::foreignKey($foreignKey, $name);
+            $foreignKeys[$name] = new ForeignKey(
+                $name,
+                $foreignKey->getLocalColumns(),
+                $foreignKey->getForeignTableName(),
+                $foreignKey->getForeignColumns(),
+                self::action($foreignKey, 'onDelete'),
+                self::action($foreignKey, 'onUpdate'),
+            );
         }
         ksort($foreignKeys);
 
         return new Table($table->getName(), $columns, $table->getPrimaryKey()?->getColumns() ?? [], $indexes, $foreignKeys);
     }
 
-    /** @param (\Closure(Type): ?list<string>)|null $values */
-    private static function column(SchemaColumn $column, ?\Closure $values): Column
+    /** @param list<string> $columns */
+    private static function foreignKeyName(string $table, array $columns, int $length): string
+    {
+        return strtoupper(substr('fk_'.implode('', array_map(static fn (string $name): string => dechex(crc32($name)), [$table, ...$columns])), 0, $length));
+    }
+
+    /** A table's name as getName() gave it: the qualifier's value and a dot before the name's. */
+    private static function qualified(OptionallyQualifiedName $name): string
+    {
+        $qualifier = $name->getQualifier();
+
+        return (null === $qualifier ? '' : $qualifier->getValue().'.').$name->getUnqualifiedName()->getValue();
+    }
+
+    /**
+     * A column's, an index's or a key's name as getName() gave it: the identifier's value, '' for none.
+     *
+     * @param AbstractAsset<UnqualifiedName> $asset
+     */
+    private static function name(AbstractAsset $asset): string
+    {
+        \assert(method_exists($asset, 'getObjectName'));
+        $name = $asset->getObjectName();
+        \assert(null === $name || $name instanceof UnqualifiedName);
+
+        return null === $name ? '' : $name->getIdentifier()->getValue();
+    }
+
+    /**
+     * @param list<UnqualifiedName> $names
+     *
+     * @return list<string> the names as given to the index or the key
+     */
+    private static function names(array $names): array
+    {
+        return array_map(static fn (UnqualifiedName $name): string => $name->toString(), $names);
+    }
+
+    /** @return list<string> */
+    private static function indexed(SchemaIndex $index): array
+    {
+        return array_map(static fn (IndexedColumn $column): string => $column->getColumnName()->toString(), $index->getIndexedColumns());
+    }
+
+    /**
+     * The column, its type by its name where DBAL keeps it (Column::getTypeName(), 4.6; Column::getType() and
+     * Type::lookupName() are deprecated there), the instance $values is given from the connection's types
+     * ($types, those of DBAL's registry for a table given alone), as Column::getType() resolved it.
+     *
+     * @param (\Closure(Type): ?list<string>)|null $values
+     */
+    private static function column(string $name, SchemaColumn $column, ?\Closure $values, ?TypeProvider $types): Column
     {
         $default = $column->getDefault();
         $precision = $column->getPrecision();
         $scale = $column->getScale();
+        // @phpstan-ignore function.alreadyNarrowedType (DBAL 4.2 to 4.5, which composer.json still allows, has no type name)
+        $byName = method_exists($column, 'getTypeName');
 
         return new Column(
-            $column->getName(),
-            Type::lookupName($column->getType()),
+            $name,
+            $byName ? $column->getTypeName() : Type::lookupName($column->getType()),
             !$column->getNotnull(),
             $column->getLength(),
             $precision,
@@ -285,20 +450,14 @@ final class MetadataDescription
             $column->getUnsigned(),
             $column->getAutoincrement(),
             \is_scalar($default) ? $default : null,
-            null !== $values ? $values($column->getType()) : null,
+            null !== $values ? $values($byName ? ($types ?? self::registry())->get($column->getTypeName()) : $column->getType()) : null,
         );
     }
 
-    private static function foreignKey(ForeignKeyConstraint $foreignKey, string $name): ForeignKey
+    /** DBAL's registry: the type provider of a connection configured without one (Type::getTypeRegistry() is deprecated since 4.6). */
+    private static function registry(): TypeProvider
     {
-        return new ForeignKey(
-            $name,
-            $foreignKey->getLocalColumns(),
-            $foreignKey->getForeignTableName(),
-            $foreignKey->getForeignColumns(),
-            self::action($foreignKey, 'onDelete'),
-            self::action($foreignKey, 'onUpdate'),
-        );
+        return (new DbalConfiguration())->getTypeProvider();
     }
 
     /**
