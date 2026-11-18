@@ -106,8 +106,11 @@ final class DeclarationDriverTest extends TestCase
     public function testTheMetadataFromDeclarationsKeptAsData(): void
     {
         $doctrine = Harness::entityManager();
-        $json = json_encode(DeclarationSet::of(new AttributeReader(), Harness::classes())->toArray(), \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT);
-        $set = DeclarationSet::fromArray(json_decode($json, true, 512, \JSON_THROW_ON_ERROR));
+        // omnisense/omnibridge 2.0's DeclarationSet::toArray() leaves an enumeration argument as the case (Thread's
+        // #[ORM\OrderBy] says SortDirection::Ascending since 4.0), which JSON has no form for: written here as its
+        // class and name, read back as the case.
+        $json = json_encode(self::enumerations(DeclarationSet::of(new AttributeReader(), Harness::classes())->toArray(), true), \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT);
+        $set = DeclarationSet::fromArray(self::enumerations(json_decode($json, true, 512, \JSON_THROW_ON_ERROR), false));
         $fromData = Harness::entityManager(static fn (MappingDriver $driver) => new DeclarationDriver($driver, $set));
 
         self::assertStringContainsString('"JoinTable"', $json);
@@ -146,5 +149,22 @@ final class DeclarationDriverTest extends TestCase
         self::assertTrue(class_exists($className), $className);
         /** @var class-string $className */
         return $className;
+    }
+
+    private static function enumerations(mixed $value, bool $export): mixed
+    {
+        if ($export && $value instanceof \UnitEnum) {
+            return ['@enum' => [$value::class, $value->name]];
+        }
+        if (!\is_array($value)) {
+            return $value;
+        }
+        if (!$export && isset($value['@enum']) && 1 === \count($value) && \is_array($value['@enum'])) {
+            [$class, $name] = $value['@enum'];
+
+            return \constant($class.'::'.$name);
+        }
+
+        return array_map(static fn (mixed $item): mixed => self::enumerations($item, $export), $value);
     }
 }

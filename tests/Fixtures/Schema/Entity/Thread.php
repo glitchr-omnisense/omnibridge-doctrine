@@ -23,7 +23,7 @@ class Thread extends Timestamps
 
     /** @var array<Tag> */
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'threads', cascade: ['persist'])]
-    #[ORM\OrderBy(['label' => 'ASC'])]
+    #[ORM\OrderBy(['label' => \SortDirection::Ascending])]
     protected array $tags = [];
 
     #[ORM\PrePersist, ORM\PreUpdate]
