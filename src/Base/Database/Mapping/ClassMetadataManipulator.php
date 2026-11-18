@@ -7,6 +7,8 @@ use Base\Database\Entity\Extension\TranslatableInterface;
 use Omnibridge\Doctrine\Omnibase\DoctrineShapes;
 use Omnibridge\Doctrine\Omnibase\EnumTypeAdapter;
 use Base\Database\Type\EnumType;
+use Base\Database\Type\Enumerations;
+use Omnibridge\Doctrine\Omnibase\Types as OmnibaseTypes;
 use Base\Database\Type\SetType;
 use Base\Field\Type\DateTimePickerType;
 use Base\Field\Type\AssociationType;
@@ -59,6 +61,9 @@ use Base\Database\Mapping\TranslationInterface;
  */
 class ClassMetadataManipulator extends MetadataManipulatorBase
 {
+    /** omnibase's core types, for a manipulator without an entity manager (getDoctrineType()). */
+    private static ?\Doctrine\DBAL\Types\TypeRegistry $coreTypes = null;
+
     /**
      * @var ManagerRegistry|null
      * */
@@ -282,11 +287,18 @@ class ClassMetadataManipulator extends MetadataManipulatorBase
             return $type;
         }
 
+        // Without an entity manager (a manipulator made for the metadata being built, DoctrineMappingHooks): an
+        // enumeration is the one Base\Database\Type\Enumerations knows by that name - the connection's type provider
+        // registered it there (omnibridge/doctrine 4.0: DBAL's static registry holds none of omnibase's types).
+        if (null === $this->entityManager && null !== ($enumeration = Enumerations::classOf($type))) {
+            return new $enumeration();
+        }
+
         try {
-            // The connection's types (Type::getType() is deprecated since DBAL 4.6); DBAL's built-in ones without an
+            // The connection's types (Type::getType() is deprecated since DBAL 4.6); omnibase's core types without an
             // entity manager.
-            $configuration = $this->entityManager?->getConnection()->getConfiguration() ?? new \Doctrine\DBAL\Configuration();
-            $doctrineType = $configuration->getTypeProvider()->get($type);
+            $types = $this->entityManager?->getConnection()->getConfiguration()->getTypeProvider() ?? (self::$coreTypes ??= OmnibaseTypes::provider());
+            $doctrineType = $types->get($type);
         } catch (Exception $e) {
             // throw new LogicException("Have you modified an entity (or an enum), or imported a new database ? Please doom the cache if so. Also make sure to use custom db features from base component", $e->getCode(), $e);
             return null;
