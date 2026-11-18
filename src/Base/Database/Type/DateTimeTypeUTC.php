@@ -4,8 +4,10 @@ namespace Base\Database\Type;
 
 /**
  * Doctrine's `datetime` (and `datetimetz`) as omnibase overrides them with
- * base.database.use_custom (BaseBundle::boot()): a \DateTime moved to UTC as
- * it is written, read back as UTC.
+ * base.database.use_custom: a moment written in UTC, read back as a
+ * \DateTimeImmutable in UTC (omnibridge/doctrine 4.0; a \DateTime before, which
+ * DBAL 4.6 deprecates). Any \DateTimeInterface is written; the object given is
+ * left as it is.
  *
  * The conversion is omnibridge/doctrine's DateTimeType, the one another
  * framework reading the same database registers (Omnibridge\Doctrine\Types):

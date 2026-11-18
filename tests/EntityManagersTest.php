@@ -42,6 +42,7 @@ final class EntityManagersTest extends TestCase
 
         self::assertSame(['2026-10-05 05:02:00', '2026-10-05 05:02:00'], array_values($connection->fetchAssociative('SELECT publishedAt, updatedAt FROM thread')), 'written in UTC');
         $read = $entityManager->getRepository(Thread::class)->findOneBy(['slug' => 'le-fuji']);
+        self::assertInstanceOf(\DateTimeImmutable::class, $read->publishedAt, 'datetime is read as an immutable moment');
         self::assertSame('2026-10-05 05:02 UTC', $read->publishedAt->format('Y-m-d H:i T'), 'read as UTC');
         self::assertSame('2026-10-05 05:02 UTC', $read->updatedAt->format('Y-m-d H:i T'));
     }

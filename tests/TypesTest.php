@@ -24,9 +24,21 @@ final class TypesTest extends TestCase
         $platform = new MySQLPlatform();
         $type = new DateTimeType();
 
-        self::assertSame('2026-10-18 07:30:00', $type->convertToDatabaseValue(new \DateTime('2026-10-18 09:30:00', new \DateTimeZone('Europe/Paris')), $platform));
+        $paris = new \DateTime('2026-10-18 09:30:00', new \DateTimeZone('Europe/Paris'));
+        self::assertSame('2026-10-18 07:30:00', $type->convertToDatabaseValue($paris, $platform));
+        self::assertSame('Europe/Paris', $paris->getTimezone()->getName(), 'the object written is left as it is');
         $read = $type->convertToPHPValue('2026-10-18 07:30:00', $platform);
+        self::assertInstanceOf(\DateTimeImmutable::class, $read);
         self::assertSame('2026-10-18T07:30:00+00:00', $read->format(\DATE_ATOM));
+    }
+
+    /** 4.0: no type of the bridge is DBAL's mutable DateTimeType (deprecated in DBAL 4.6, gone in 5). */
+    public function testTheDateTypesAreImmutable(): void
+    {
+        foreach ([DateTimeType::class, UtcDateTimeType::class, UtcDateTimeImmutableType::class] as $class) {
+            self::assertTrue(is_subclass_of($class, \Doctrine\DBAL\Types\DateTimeImmutableType::class), $class);
+            self::assertFalse(is_subclass_of($class, \Doctrine\DBAL\Types\DateTimeType::class), $class);
+        }
     }
 
     /** One time: every date and time type registered writes and reads UTC, the immutable ones too. */
@@ -40,7 +52,7 @@ final class TypesTest extends TestCase
             $value = str_contains($name, 'immutable') ? $paris : \DateTime::createFromImmutable($paris);
             self::assertSame('2026-10-18 07:30:00', $type->convertToDatabaseValue($value, $platform), $name);
             $converted = $type->convertToPHPValue('2026-10-18 07:30:00', $platform);
-            self::assertInstanceOf(\DateTimeInterface::class, $converted);
+            self::assertInstanceOf(\DateTimeImmutable::class, $converted, $name);
             self::assertSame('2026-10-18T07:30:00+00:00', $converted->format(\DATE_ATOM), $name);
         }
     }

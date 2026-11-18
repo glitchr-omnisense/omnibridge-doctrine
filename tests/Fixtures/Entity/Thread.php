@@ -14,8 +14,9 @@ class Thread
     #[ORM\Column]
     public string $slug = '';
 
+    /** `datetime` reads a \DateTimeImmutable (4.0) and writes any moment, a \DateTime too. */
     #[ORM\Column(type: 'datetime', nullable: true)]
-    public ?\DateTime $publishedAt = null;
+    public ?\DateTimeInterface $publishedAt = null;
 
     #[ORM\Column(type: 'utc_datetime_immutable', nullable: true)]
     public ?\DateTimeImmutable $updatedAt = null;

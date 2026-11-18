@@ -3,13 +3,14 @@
 namespace Base\Database\Type;
 
 /**
- * UtcDateTimeImmutableType's mutable twin (`utc_datetime`): a \DateTime
- * written in UTC and read back as UTC, whatever zone PHP is in.
+ * `utc_datetime`: a moment written in UTC and read back in UTC, whatever zone
+ * PHP is in - since omnibridge/doctrine 4.0 as a \DateTimeImmutable, as
+ * UtcDateTimeImmutableType reads it (it was its mutable twin; DBAL 4.6
+ * deprecates the mutable DateTimeType it extended). The name stays.
  *
  * With base.database.use_custom (the default) omnibase's plain `datetime` is
  * UTC already; this type says so by name, and holds without that option. It
- * leaves the object it is given untouched (DateTimeTypeUTC moves the entity's
- * own \DateTime to UTC as it writes it).
+ * leaves the object it is given untouched.
  *
  * omnibridge/doctrine's UtcDateTimeType, under omnibase's name: written and
  * read as it writes and reads (in UTC; unreadable, the DBAL's own exception),
