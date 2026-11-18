@@ -30,7 +30,7 @@ final class QueryPagesTest extends TestCase
         $entityManager->clear();
 
         $pages = new QueryPages($entityManager->createQuery('SELECT t FROM '.Thread::class.' t ORDER BY t.id ASC'));
-        $slugs = static fn (iterable $threads): array => array_map(static fn (Thread $thread) => $thread->slug, [...$threads]);
+        $slugs = static fn (iterable $threads): array => array_map(static fn (mixed $thread): ?string => $thread instanceof Thread ? $thread->slug : null, [...$threads]);
 
         self::assertSame(5, $pages->count());
         self::assertSame(['thread-3', 'thread-4'], $slugs($pages->slice(2, 2)));

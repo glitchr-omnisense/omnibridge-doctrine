@@ -37,8 +37,9 @@ final class TypesTest extends TestCase
     public function testTheDateTypesAreImmutable(): void
     {
         foreach ([DateTimeType::class, UtcDateTimeType::class, UtcDateTimeImmutableType::class] as $class) {
-            self::assertTrue(is_subclass_of($class, \Doctrine\DBAL\Types\DateTimeImmutableType::class), $class);
-            self::assertFalse(is_subclass_of($class, \Doctrine\DBAL\Types\DateTimeType::class), $class);
+            $type = new \ReflectionClass($class);
+            self::assertTrue($type->isSubclassOf(\Doctrine\DBAL\Types\DateTimeImmutableType::class), $class);
+            self::assertNotContains(\Doctrine\DBAL\Types\DateTimeType::class, class_parents($class), $class);
         }
     }
 

@@ -30,7 +30,7 @@ final class EntityManagersTest extends TestCase
         $entityManager = EntityManagers::create($connection, [__DIR__.'/Fixtures/Entity'], true);
         (new SchemaTool($entityManager))->createSchema([$entityManager->getClassMetadata(Thread::class)]);
 
-        self::assertSame(['id', 'slug', 'publishedAt', 'updatedAt'], array_values(array_map(static fn ($column) => $column->getName(), $connection->createSchemaManager()->listTableColumns('thread'))), 'omnibase\'s table and column names');
+        self::assertSame(['id', 'slug', 'publishedAt', 'updatedAt'], array_values(array_map(static fn ($column) => $column->getObjectName()->toString(), $connection->createSchemaManager()->listTableColumns('thread'))), 'omnibase\'s table and column names');
 
         $thread = new Thread();
         $thread->slug = 'le-fuji';
@@ -42,6 +42,7 @@ final class EntityManagersTest extends TestCase
 
         self::assertSame(['2026-10-05 05:02:00', '2026-10-05 05:02:00'], array_values($connection->fetchAssociative('SELECT publishedAt, updatedAt FROM thread')), 'written in UTC');
         $read = $entityManager->getRepository(Thread::class)->findOneBy(['slug' => 'le-fuji']);
+        self::assertNotNull($read);
         self::assertInstanceOf(\DateTimeImmutable::class, $read->publishedAt, 'datetime is read as an immutable moment');
         self::assertSame('2026-10-05 05:02 UTC', $read->publishedAt->format('Y-m-d H:i T'), 'read as UTC');
         self::assertSame('2026-10-05 05:02 UTC', $read->updatedAt->format('Y-m-d H:i T'));

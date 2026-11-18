@@ -161,6 +161,7 @@ final class DeclarationDriverTest extends TestCase
         }
         if (!$export && isset($value['@enum']) && 1 === \count($value) && \is_array($value['@enum'])) {
             [$class, $name] = $value['@enum'];
+            \assert(\is_string($class) && \is_string($name));
 
             return \constant($class.'::'.$name);
         }
