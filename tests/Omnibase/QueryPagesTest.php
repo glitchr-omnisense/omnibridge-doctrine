@@ -4,17 +4,15 @@ namespace Omnibridge\Doctrine\Tests\Omnibase;
 
 use App\Entity\Thread;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\ORM\Tools\Pagination\OffsetPaginator;
-use Doctrine\ORM\Tools\Pagination\Window;
 use Doctrine\ORM\Tools\SchemaTool;
 use Omnibridge\Doctrine\EntityManagers;
 use Omnibridge\Doctrine\Omnibase\QueryPages;
 use PHPUnit\Framework\TestCase;
 
-/** A DQL query paged: its slices, its count, and doctrine/orm 3.8's OffsetPaginator over the same paged query (4.0). */
+/** A DQL query paged: its slices, its count, and the paged query of a page. */
 final class QueryPagesTest extends TestCase
 {
-    public function testAPageIsTheSameThroughSliceAndThroughTheOffsetPaginator(): void
+    public function testAPageIsTheSameThroughSliceAndThroughThePagedQuery(): void
     {
         if (!interface_exists(\Base\Service\Model\Pages::class)) {
             self::markTestSkipped('omnisense/omnibase is not installed.');
@@ -34,10 +32,9 @@ final class QueryPagesTest extends TestCase
 
         self::assertSame(5, $pages->count());
         self::assertSame(['thread-3', 'thread-4'], $slugs($pages->slice(2, 2)));
-        $paginator = $pages->paginator();
-        self::assertInstanceOf(OffsetPaginator::class, $paginator);
-        $page = $paginator->paginate($pages->query(0, 2), Window::fromPageNumberAndSize(2, 2));
-        self::assertSame(['thread-3', 'thread-4'], $slugs($page));
-        self::assertSame(5, $page->getTotalCount());
+        $rows = $pages->query(2, 2)->getResult();
+        self::assertIsArray($rows);
+        self::assertSame(['thread-3', 'thread-4'], $slugs($rows));
+        self::assertSame(['thread-5'], $slugs($pages->slice(4, 2)));
     }
 }

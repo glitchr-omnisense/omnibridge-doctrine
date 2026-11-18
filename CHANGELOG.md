@@ -24,7 +24,8 @@ none under DBAL 4.6 / ORM 3.8. doctrine/dbal ^4.6 (`Configuration::setTypeProvid
   (`FK_` and the CRC32 of the table's and columns' names), the one the sites' migrations wrote - on the migrated dev
   copies of three sites (123, 147 and 240 keys), the update SQL and every key, index and unique name
   are the same with the API on and off.
-- `QueryPages::paginator()` returns doctrine/orm 3.8's `OffsetPaginator`, as 3.0.3 announced.
+- `QueryPages::paginator()` is removed: `slice()` and `count()` page the query, as they did since 3.0.3 (the
+  `OffsetPaginator` 3.0.3 announced is not needed for a page).
 - The Doctrine-vocabulary test fixture orders by `\SortDirection`; omnibase's vocabulary (`Base\Mapping\OrderBy`) is
   given to Doctrine as `SortDirection` by `DeclarationDriver` since 3.0.4, strings or not.
 
@@ -45,8 +46,8 @@ none under DBAL 4.6 / ORM 3.8. doctrine/dbal ^4.6 (`Configuration::setTypeProvid
 - An entity property mapped `datetime`, `datetimetz` or `utc_datetime` receives a `\DateTimeImmutable`: a property, a
   getter or a parameter typed `\DateTime` becomes `\DateTimeImmutable` (or `\DateTimeInterface`), code changing the
   value in place (`->modify()`, `->setTime()`) assigns the result instead. Writing a `\DateTime` still works.
-- `QueryPages::paginator()` returns an `OffsetPaginator`: `$pages->paginator()->paginate($pages->query(0, $size),
-  Window::fromPageNumberAndSize($number, $size))`.
+- `QueryPages::paginator()` is gone: `$pages->slice(($number - 1) * $size, $size)` for a page's rows,
+  `$pages->count()` for the total (`$pages->query($offset, $limit)` for the paged query itself).
 - An entity manager built by `EntityManagers::create()` has the schema editor API on; a `configure:` closure may still
   turn it off (deprecated in doctrine/orm 3.8). A host building its own entity manager registers `ForeignKeyNames` on
   `postGenerateSchema` to keep the foreign keys' names.

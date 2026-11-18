@@ -7,14 +7,13 @@ use Omnibridge\Doctrine\Omnibase\Database\Walker\GroupByWalker;
 use Omnibridge\Doctrine\Omnibase\Database\Walker\TranslatableWalker;
 use Base\Service\Model\Pages;
 use Doctrine\ORM\Query;
-use Doctrine\ORM\Tools\Pagination\OffsetPaginator;
 
 /**
  * A DQL query paged (plan "omnibase agnostic", step F2e): what Base\Service\Model\Pagination did with a
  * Query, moved here as it was - the rows grouped by id (GroupByWalker), the translations joined
  * (TranslatableWalker), a page the paged query's own window, the total counted by CountWalker on a clone.
- * The pages never go through a Doctrine paginator: paginator() gives doctrine/orm 3.8's OffsetPaginator (4.0;
- * the Paginator of before is deprecated there) to whoever pages the paged query themselves.
+ * The pages never go through a Doctrine paginator: slice() runs the paged query with its own window, count() the
+ * CountWalker clone (4.0 removes paginator(); Doctrine's Paginator is deprecated by doctrine/orm 3.8).
  */
 final class QueryPages implements Pages
 {
@@ -44,19 +43,6 @@ final class QueryPages implements Pages
     public function query(int $offset, int $limit): Query
     {
         return $this->paged->setFirstResult($offset)->setMaxResults($limit);
-    }
-
-    /**
-     * doctrine/orm 3.8's OffsetPaginator, for the paged query (4.0; Doctrine's Paginator before, deprecated in 3.8).
-     * It holds no query: it is given one with the window to read, the rows grouped and translated as slice() reads them:
-     *
-     *     $page = $pages->paginator()->paginate($pages->query(0, $size), Window::fromPageNumberAndSize($number, $size));
-     *
-     * @return OffsetPaginator<mixed>
-     */
-    public function paginator(): OffsetPaginator
-    {
-        return new OffsetPaginator();
     }
 
     /** The query counting the rows of $query (Pagination::getCountQuery()). */
