@@ -279,7 +279,7 @@ class ClassMetadataManipulator extends MetadataManipulatorBase
 
     /**
      * @param string|null $type
-     * @return Type|string|null
+     * @return Type|EnumType|string|null an enumeration's column: the enumeration itself
      */
     public function getDoctrineType(?string $type)
     {
